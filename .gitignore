@@ -1,0 +1,23 @@
+# GhostForge Data
+ghostforge_data/
+exports/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+.env
+
+# MacOS
+.DS_Store
+
+# Node
+node_modules/
+
+# OS generated files
+Thumbs.db
