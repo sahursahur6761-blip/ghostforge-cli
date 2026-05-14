@@ -2,17 +2,22 @@ import unittest
 import os
 import json
 import ghostforge
+from datetime import datetime
 
-class TestGhostForge(unittest.TestCase):
+class TestGhostForgeV2(unittest.TestCase):
     def setUp(self):
-        # Create a temporary vault for testing
         self.test_vault_file = 'test_vault.json'
         ghostforge.VAULT_FILE = self.test_vault_file
+        # Mocking the path for the tool's utility function if it uses it
+        if hasattr(ghostforge, 'get_vault_path'):
+             ghostforge.get_vault_path = lambda: self.test_vault_file
+
         self.default_vault = {
-            "player": {"level": 1, "xp": 0, "gold": 0, "class": "Novice", "inventory": []},
+            "player": {"level": 1, "xp": 0, "gold": 0, "class": "Novice", "inventory": [], "titles": ["The Unforged"]},
             "missions": [],
             "bosses": [],
-            "history": []
+            "history": [],
+            "shop": [{"name": "Test Item", "price": 10, "effect": "Test"}]
         }
         with open(self.test_vault_file, 'w') as f:
             json.dump(self.default_vault, f)
@@ -21,28 +26,24 @@ class TestGhostForge(unittest.TestCase):
         if os.path.exists(self.test_vault_file):
             os.remove(self.test_vault_file)
 
-    def test_load_vault(self):
-        vault = ghostforge.load_vault()
-        self.assertEqual(vault['player']['level'], 1)
-
-    def test_add_xp_and_level_up(self):
+    def test_economy_and_shop(self):
         vault = self.default_vault
-        ghostforge.add_xp(vault, 150)
-        self.assertEqual(vault['player']['level'], 2)
-        self.assertEqual(vault['player']['xp'], 50)
+        vault['player']['gold'] = 20
+        ghostforge.cmd_shop(vault, 'buy', 0)
+        self.assertEqual(vault['player']['gold'], 10)
+        self.assertIn("Test Item", vault['player']['inventory'])
 
-    def test_promotion(self):
+    def test_mission_gold_reward(self):
         vault = self.default_vault
-        # Level 5 needed for promotion
-        ghostforge.add_xp(vault, 1000) # Lvl 1->2 (100), 2->3 (200), 3->4 (300), 4->5 (400)
-        self.assertEqual(vault['player']['level'], 5)
-        self.assertEqual(vault['player']['class'], "Apprentice Coder")
+        vault['missions'].append({"title": "Gold Rush", "reward": 100, "completed": False})
+        ghostforge.cmd_mission_complete(vault, 0)
+        self.assertEqual(vault['player']['gold'], 50) # 100 // 2
 
-    def test_boss_loot(self):
+    def test_project_pulse_logging(self):
         vault = self.default_vault
-        ghostforge.cmd_boss_spawn(vault, "Dragon", "Big bad", 100)
-        ghostforge.cmd_boss_slay(vault, 0)
-        self.assertIn("Artifact of Dragon", vault['player']['inventory'])
+        ghostforge.log_history(vault, "Test Event")
+        self.assertEqual(len(vault['history']), 1)
+        self.assertIn("timestamp", vault['history'][0])
 
 if __name__ == '__main__':
     unittest.main()

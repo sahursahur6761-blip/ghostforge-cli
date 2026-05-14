@@ -1,53 +1,49 @@
-# GhostForge CLI 🛠️🥷
+# GhostForge CLI v2.0: The Ultimate Forge ⚒️🌌
 
-GhostForge is an offline, RPG-styled project manager and terminal command center. It turns your engineering tasks into a quest for glory.
+GhostForge is the terminal command center for engineers who want to turn their project grind into a legendary RPG.
 
-## Features
-- **RPG-Style Progression**: Earn XP, level up, and find Artifacts (loot) as you work.
-- **Interactive Forge Mode**: Run `ghostforge.py` without arguments to enter a persistent shell.
-- **Colorized UI**: High-contrast ANSI colors for a hacker/RPG aesthetic.
-- **Offline & Private**: All data is stored locally in `vault.json`. No internet required.
-- **Zero Dependencies**: Requires only Python 3 standard library.
+## ⚔️ The Ultimate Forge Features
+- **Project Pulse**: A visual ASCII activity graph in your profile. See your momentum!
+- **Economy & Shop**: Earn **Gold** ⟁ from missions. Spend it on titles, XP boosts, and gear in the Black Market Shop.
+- **Titles & Classes**: Evolve from a *Novice (The Unforged)* to a *Senior Architect (Ghost of the Machine)*.
+- **Masterful Shell**: Enhanced interactive mode with tab-completion (`readline`) and robust command parsing (`shlex`).
+- **Aesthetic Overhaul**: New ASCII banners, progress bars, and typing effects.
 
-## Quick Start
+## 🚀 Quick Start
 
-### 1. "Installation"
-Simply download `ghostforge.py` to your project folder.
-
+### 1. Installation
 ```bash
-chmod +x ghostforge.py
 ./install.sh
 ```
 
-### 2. Enter the Forge (Interactive Mode)
+### 2. Enter The Forge
 ```bash
 python3 ghostforge.py
 ```
-From here you can run commands like `mission add "Fix bug"`, `boss list`, etc.
+*Try typing `help` once inside.*
 
-### 3. CLI Mode
-You can also run commands directly:
+### 3. Quick CLI Commands
 ```bash
-python3 ghostforge.py vault
-python3 ghostforge.py mission add "Refactor code" --reward 50
+python3 ghostforge.py vault                   # View Profile & Pulse
+python3 ghostforge.py mission add "Feature"   # Start a mission
+python3 ghostforge.py mission complete 0      # Claim XP & Gold
 ```
 
-## Commands (Interactive & CLI)
+## 💎 Gamer's Guide
 
-| Command | Sub-command | Description |
-|---------|-------------|-------------|
-| `vault` | | View your Level, XP, Class, and Items. |
-| `forge` | | Enter the interactive shell. |
-| `mission` | `list` | See all active and completed tasks. |
-| `mission` | `add <title>` | Create a new task. |
-| `mission` | `complete <id>`| Finish a task and earn XP. |
-| `boss` | `list` | See your milestones. |
-| `boss` | `spawn <name>` | Create a major project milestone. |
-| `boss` | `slay <id>` | Defeat the boss and earn XP + Loot! |
+### 📈 Leveling Up
+Complete missions to gain XP. Each level up increases the XP requirement but unlocks new class tiers and titles.
 
-## RPG Mechanics
-- **Levels**: Each level requires more XP than the last.
-- **Promotions**: Reaching certain levels changes your character class.
-- **Artifacts**: Defeating bosses grants unique artifacts that appear in your Vault.
+### 💰 The Economy
+Every mission completed grants Gold.
+- Type `shop` in the Forge to see available items.
+- Type `shop buy <id>` to spend your hard-earned ⟁.
 
-Stay offline. Stay productive. Keep forging.
+### 👹 Boss Slaying
+Bosses are major project milestones. Slaying them grants massive XP, 100 Gold, and a unique **Artifact** for your collection.
+
+### 📊 Project Pulse
+Your Vault shows a 7-day activity graph. Keep the bars high to maintain your productivity streak!
+
+---
+**Strictly Offline. Zero Dependencies. Maximum Glory.**
