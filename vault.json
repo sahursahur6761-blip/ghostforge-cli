@@ -1,0 +1,16 @@
+{
+    "player": {
+        "level": 2,
+        "xp": 25,
+        "xp_to_next": 150
+    },
+    "missions": [
+        {
+            "id": 1,
+            "title": "Infiltrate the mainframe",
+            "description": "No description provided.",
+            "difficulty": 2,
+            "status": "complete"
+        }
+    ]
+}
