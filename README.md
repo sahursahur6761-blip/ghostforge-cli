@@ -1,14 +1,14 @@
-# GhostForge CLI v5.0: The Citadel 🏰🌌
+# GhostForge CLI v6.0: The Singularity 🌌🛡️
 
-GhostForge is the premiere offline terminal RPG for software engineers. Welcome to The Citadel—your high-security base of operations for legendary engineering.
+GhostForge is the premiere offline terminal RPG for software engineers. Welcome to The Singularity—where your engineering output transcends the limits of the grid.
 
-## ⚔️ New in v5.0: The Citadel Update
-- **Citadel Dashboard**: Run `status` for a high-density view of your Level, XP progress, Gold, and active missions.
-- **Dev Journal**: Record technical logs and architectural thoughts with the `journal` command.
-- **Mission Priority**: Tag missions with `Low`, `Med`, or `High` priority for better focus.
-- **Vault Archiving**: Protect your progress with `backup` to create timestamped snapshots of your `vault.json`.
-- **Advanced Autocomplete**: Smarter tab-completion in interactive mode for all core commands.
-- **Theming & Campaigns**: Full support for `Cyberpunk`, `Frost`, and `Hellfire` themes across multiple project campaigns.
+## ⚔️ New in v6.0: The Singularity Update
+- **The Research Lab**: Invest your Gold into Tech Tiers like *Automation* (+Gold), *Optics* (+Quests), and *Logic* (+XP).
+- **Ascension (Prestige)**: Reached Level 50? Run the `ascend` command to reset your progress for **Singularity Shards**. Each shard provides a permanent +100% XP multiplier.
+- **Object-Oriented Architecture**: A completely refactored core for maximum performance and stability.
+- **Atomic Save System**: Enhanced data integrity using temporary files to prevent vault corruption.
+- **Forge Pulse Sparklines**: A new 7-day activity sparkline in your `status` dashboard.
+- **The Void Theme**: A new ultra-minimalist theme for those who have seen beyond the grid.
 
 ## 🚀 Quick Start
 
@@ -23,19 +23,22 @@ python3 ghostforge.py
 ```
 
 ### 3. Core Commands
-- `status`: The ultimate compact overview of your progress.
-- `journal add "Message"`: Record a note in your engineering log.
-- `mission add "Title" 50 High`: Add a high-priority mission with 50 XP reward.
-- `backup`: Archive your current vault data.
-- `roll <bet>`: Gamble gold for a chance at a critical windfall.
+- `status`: Compact overview with activity sparklines.
+- `research`: Open the lab to upgrade your global multipliers.
+- `ascend`: Reset for permanent power (Level 50 required).
+- `mission <list|add|complete>`: Manage your engineering deeds.
+- `vault`: View your permanent archives and research levels.
 
-## 💎 The Citadel Lore
+## 💎 The Singularity Guide
 
-### 📖 The Journal
-The `journal` is your legacy. Use it to document your daily wins, bug-squashing strategies, or architectural epiphanies. It persists across all campaigns.
+### 🧬 Research & Tech Tiers
+Research provides permanent global buffs that persist across all campaigns.
+- **Automation**: Increases Gold bounty from all missions.
+- **Logic**: Increases XP gain from all missions.
+- **Optics**: (Coming Soon) Enhances daily quest rewards.
 
-### 🛡️ Vault Security
-Your `vault.json` is your most precious asset. Regular use of the `backup` command ensures that even a corrupted file won't stop your ascension. Backups are stored in the `.forge_backups` directory.
+### ☸️ The Ascension Loop
+Ascension is for the ultimate forge masters. By resetting your progress, you gain **Singularity Shards**. These shards are the only way to reach astronomical levels in the late-game.
 
 ---
 **Strictly Offline. Zero Dependencies. Maximum Glory.**

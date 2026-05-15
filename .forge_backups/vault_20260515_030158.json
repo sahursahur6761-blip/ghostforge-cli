@@ -1,0 +1,74 @@
+{
+    "player": {
+        "level": 2,
+        "xp": 0,
+        "gold": 50,
+        "sp": 1,
+        "shards": 0,
+        "class": "Novice",
+        "inventory": [],
+        "titles": [
+            "The Unforged"
+        ],
+        "skills": {
+            "efficiency": 0,
+            "greed": 0,
+            "luck": 0
+        },
+        "research": {
+            "automation": 0,
+            "optics": 0,
+            "logic": 0
+        },
+        "buffs": {},
+        "theme": "Cyberpunk"
+    },
+    "campaigns": {
+        "Default": {
+            "missions": [
+                {
+                    "title": "Final Polish",
+                    "reward": 100,
+                    "completed": true,
+                    "priority": "High"
+                }
+            ],
+            "bosses": []
+        }
+    },
+    "active_campaign": "Default",
+    "history": [
+        {
+            "timestamp": "2026-05-15T03:01:57.164805",
+            "event": "Completed: Final Polish"
+        }
+    ],
+    "journal": [
+        {
+            "date": "2026-05-15 03:01",
+            "text": "Polished the engine"
+        }
+    ],
+    "shop": [
+        {
+            "name": "Coffee of Focus",
+            "price": 50,
+            "effect": "XP_BOOST",
+            "duration": 3,
+            "desc": "+20% XP for 3 missions."
+        },
+        {
+            "name": "Energy Drink",
+            "price": 80,
+            "effect": "GOLD_BOOST",
+            "duration": 3,
+            "desc": "+50% Gold for 3 missions."
+        },
+        {
+            "name": "Rubber Duck",
+            "price": 100,
+            "effect": "WISDOM",
+            "desc": "Instantly grants 20 XP."
+        }
+    ]
+}
