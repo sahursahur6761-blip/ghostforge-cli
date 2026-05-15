@@ -19,7 +19,7 @@ except ImportError:
 # --- Constants & Configuration ---
 VAULT_FILE = os.path.expanduser('~/.ghostforge_vault.json')
 BACKUP_DIR = os.path.expanduser('~/.ghostforge_backups')
-VERSION = "7.0.2"
+VERSION = "8.0.1"
 
 C_RED = "\033[31m"
 C_GREEN = "\033[32m"
@@ -37,7 +37,6 @@ THEMES = {
     "Cyberpunk": {"primary": C_CYAN, "secondary": C_MAGENTA, "accent": C_YELLOW, "b_char": "▟"},
     "Frost": {"primary": C_BLUE, "secondary": C_WHITE, "accent": C_CYAN, "b_char": "❄"},
     "Hellfire": {"primary": C_RED, "secondary": C_YELLOW, "accent": C_MAGENTA, "b_char": "🔥"},
-    "Void": {"primary": "\033[30;1m", "secondary": C_WHITE, "accent": C_MAGENTA, "b_char": "░"}
 }
 
 # --- Core Engine ---
@@ -48,6 +47,7 @@ class Forge:
         self.vault = self.load_vault()
         self.p = self.vault['player']
         self.theme = THEMES.get(self.p.get('theme', 'Cyberpunk'), THEMES["Cyberpunk"])
+        self.auto_backup()
 
     def load_vault(self):
         if not os.path.exists(self.vault_path):
@@ -56,14 +56,14 @@ class Forge:
             with open(self.vault_path, 'r') as f:
                 return self.migrate_vault(json.load(f))
         except (json.JSONDecodeError, IOError):
-            print(f"{C_RED}Error: Vault data singularity detected. File corrupted.{C_RESET}")
+            print(f"{C_RED}Error: Vault corrupted.{C_RESET}")
             sys.exit(1)
 
     def get_default_vault(self):
         return {
             "player": {
-                "level": 1, "xp": 0, "gold": 0, "sp": 0, "shards": 0,
-                "hp": 100, "max_hp": 100, "atk": 10, "def": 5,
+                "level": 1, "xp": 0, "gold": 0, "sp": 0, "energy": 50, "max_energy": 50,
+                "hp": 100, "max_hp": 100, "atk": 10, "def": 5, "spec": None,
                 "class": "Novice", "inventory": [], "titles": ["The Unforged"],
                 "skills": {"efficiency": 0, "greed": 0, "luck": 0},
                 "research": {"automation": 0, "optics": 0, "logic": 0},
@@ -71,24 +71,23 @@ class Forge:
             },
             "campaigns": {"Default": {"missions": [], "bosses": []}},
             "active_campaign": "Default",
-            "history": [], "journal": [],
+            "history": [], "journal": [], "last_backup": None,
             "shop": [
-                {"name": "Cyberdeck", "price": 200, "type": "WEAPON", "atk": 15, "desc": "A standard hacking tool. +15 ATK."},
-                {"name": "Icepick Shield", "price": 150, "type": "ARMOR", "def": 10, "desc": "Counter-intrusion software. +10 DEF."},
-                {"name": "Coffee", "price": 50, "type": "BUFF", "effect": "XP_BOOST", "duration": 3, "desc": "+20% XP (3 missions)."},
-                {"name": "Rubber Duck", "price": 100, "type": "USE", "effect": "WISDOM", "desc": "Instantly grants 20 XP."}
+                {"name": "Cyberdeck", "price": 200, "type": "WEAPON", "atk": 15, "desc": "Hacking tool. +15 ATK."},
+                {"name": "Shield", "price": 150, "type": "ARMOR", "def": 10, "desc": "Protection. +10 DEF."},
+                {"name": "Stimpack", "price": 50, "type": "USE", "effect": "HEAL", "desc": "Restore 50 HP."},
+                {"name": "Energy Cell", "price": 75, "type": "USE", "effect": "ENERGY", "desc": "Restore 50 Energy."}
             ]
         }
 
     def migrate_vault(self, v):
         p = v.setdefault('player', {})
-        p.setdefault('hp', 100)
-        p.setdefault('max_hp', 100)
-        p.setdefault('atk', 10)
-        p.setdefault('def', 5)
-        p.setdefault('shards', 0)
-        v.setdefault('campaigns', {"Default": {"missions": [], "bosses": []}})
-        v.setdefault('shop', self.get_default_vault()['shop'])
+        p.setdefault('energy', 50)
+        p.setdefault('max_energy', 50)
+        p.setdefault('spec', None)
+        v.setdefault('last_backup', None)
+        if 'campaigns' not in v: v['campaigns'] = {"Default": {"missions": [], "bosses": []}}
+        if 'active_campaign' not in v: v['active_campaign'] = "Default"
         return v
 
     def save(self):
@@ -99,60 +98,60 @@ class Forge:
             os.replace(temp_path, self.vault_path)
         except IOError as e: print(f"{C_RED}Save Error: {e}{C_RESET}")
 
-    def slow_print(self, text, delay=0.01):
-        for char in text:
-            sys.stdout.write(char)
-            sys.stdout.flush()
-            time.sleep(delay)
-        print()
+    def auto_backup(self):
+        now = datetime.now()
+        last = self.vault.get('last_backup')
+        if not last or (now - datetime.fromisoformat(last)).days >= 1:
+            if not os.path.exists(BACKUP_DIR): os.makedirs(BACKUP_DIR)
+            ts = now.strftime("%Y%m%d")
+            bp = os.path.join(BACKUP_DIR, f"vault_daily_{ts}.json")
+            self.vault['last_backup'] = now.isoformat()
+            if os.path.exists(self.vault_path):
+                shutil.copy2(self.vault_path, bp)
+            self.save()
 
     def get_banner(self):
         t = self.theme
-        p, s, b = t["primary"], t["secondary"], t["b_char"]
-        return rf"""{p}{C_BOLD}
-   {b*5}      ▟█   ▟█      {b*5}      ▟███████     {b*5}
-  ▟█    █    ▟█  ▟█     ▟█    █     ▟█          ▟█    █
-  ▟█          ▟█  ▟█     ▟█    █     ▟█          ▟█    █
-  ▟█  ▟███   ▟██████     ▟█    █     ▟███████    ▟█    █
-  ▟█    █    ▟█  ▟█     ▟█    █               ▟█ ▟█    █
-  ▟█    █    ▟█  ▟█     ▟█    █               ▟█ ▟█    █
-   ▜████▛    ▜█  ▜█      ▜████▛     ▜███████▛    ▜████▛
-{C_RESET}{s}{C_DIM}        🌌  T H E   G A L A C T I C   F O R G E   v{VERSION}  🌌
-{C_RESET}"""
+        b = t["b_char"]
+        return rf"""{t['primary']}{C_BOLD}
+   ┌────────────────────────────────────────────────────────┐
+   │ {b*3}  G H O S T F O R G E   O V E R S E E R   v{VERSION}  {b*3} │
+   └────────────────────────────────────────────────────────┘{C_RESET}"""
 
     # --- Gameplay ---
 
     def add_xp(self, amount):
-        bonus_pct = self.p['skills'].get('efficiency', 0) * 0.05 + self.p['shards'] * 1.0
-        total_xp = int(amount * (1 + bonus_pct))
-        self.p['xp'] += total_xp
+        bonus = 1.0 + (self.p['skills'].get('efficiency', 0) * 0.05)
+        if self.p['spec'] == 'Netrunner': bonus += 0.20
+        total = int(amount * bonus)
+        self.p['xp'] += total
         while self.p['xp'] >= self.p['level'] * 100:
             self.p['xp'] -= self.p['level'] * 100
             self.p['level'] += 1
-            self.p['sp'] += 1
             self.p['max_hp'] += 20
             self.p['hp'] = self.p['max_hp']
-            self.slow_print(f"\n{C_YELLOW}{C_BOLD}🌟 GALACTIC LEVEL UP! Reached Level {self.p['level']}!{C_RESET}")
+            print(f"{C_YELLOW}LEVEL UP! Reached {self.p['level']}.{C_RESET}")
+            if self.p['level'] == 10 and not self.p['spec']:
+                print(f"{C_MAGENTA}SPECIALIZATION AVAILABLE: Choose Netrunner, Enforcer, or Architect!{C_RESET}")
 
     def cmd_status(self):
         p, t = self.p, self.theme
         prim, sec, acc = t["primary"], t["secondary"], t["accent"]
-        xp_n = p['level'] * 100
-        pct = int((p['xp'] / xp_n) * 20) if xp_n > 0 else 0
-        bar = f"{sec}" + "█" * pct + f"{C_RESET}{C_DIM}" + "░" * (20 - pct) + f"{C_RESET}"
+        print(f"\n{C_BOLD}┌── CORE PROFILE {'─'*32}┐{C_RESET}")
+        print(f"│ {prim}LVL {p['level']:<2}{C_RESET} | {prim}HP:{C_RESET} {p['hp']}/{p['max_hp']} | {prim}ENG:{C_RESET} {p['energy']}/{p['max_energy']} │")
+        print(f"│ {prim}SPEC:{C_RESET} {str(p['spec']):<10} | {prim}GOLD:{C_RESET} {acc}⟁ {p['gold']:<5} │")
+        print(f"{C_BOLD}└{'─'*49}┘{C_RESET}")
 
-        print(f"\n{C_BOLD}--- GALACTIC CORE STATUS ---{C_RESET}")
-        print(f"{prim}LVL {p['level']}{C_RESET} | {bar} | {acc}⟁ {p['gold']}{C_RESET}")
-        print(f"{prim}HP:{C_RESET} {C_GREEN}{p['hp']}/{p['max_hp']}{C_RESET} | {prim}ATK:{C_RESET} {p['atk']} | {prim}DEF:{C_RESET} {p['def']}")
-        print(f"{C_DIM}Campaign:{C_RESET} {acc}{self.vault['active_campaign']}{C_RESET}")
-
-    def matrix_effect(self):
-        # A quick visual flourish
-        cols = shutil.get_terminal_size().columns
-        for _ in range(10):
-            line = "".join([random.choice("01") if random.random() > 0.9 else " " for _ in range(cols)])
-            print(f"{C_GREEN}{line}{C_RESET}")
-            time.sleep(0.05)
+    def hack_minigame(self):
+        target = "".join([random.choice("01") for _ in range(8)])
+        print(f"{C_CYAN}DECRYPTION PROTOCOL: Match the sequence {C_WHITE}{target}{C_RESET}")
+        start = time.time()
+        attempt = input("KEY: ").strip()
+        if attempt == target and (time.time() - start) < 15:
+            print(f"{C_GREEN}SUCCESS. Encryption bypassed.{C_RESET}")
+            return True
+        print(f"{C_RED}FAILURE. IDS triggered.{C_RESET}")
+        return False
 
     def cmd_combat(self, boss_idx):
         c = self.vault['campaigns'][self.vault['active_campaign']]
@@ -160,153 +159,123 @@ class Forge:
             boss = c['bosses'][int(boss_idx)]
         except: print("Invalid Boss ID."); return
 
-        if boss['defeated']: print("Boss already defeated."); return
-
-        self.matrix_effect()
-        b_hp = 100 + (self.p['level'] * 10)
-        print(f"\n{C_RED}{C_BOLD}ENCOUNTER: {boss['name']} ({b_hp} HP){C_RESET}")
+        b_hp = 100 + (self.p['level'] * 15)
+        print(f"\n{C_RED}BATTLE: {boss['name']} ({b_hp} HP){C_RESET}")
 
         while b_hp > 0 and self.p['hp'] > 0:
-            print(f"\n{C_CYAN}YOU: {self.p['hp']} HP | {C_RED}BOSS: {b_hp} HP{C_RESET}")
-            move = input(f"{C_BOLD}(S)trike or (D)efend? {C_RESET}").lower()
-            if move == 's':
-                dmg = random.randint(self.p['atk']-5, self.p['atk']+5)
+            print(f"YOU: {self.p['hp']} HP | {self.p['energy']} ENG")
+            move = input("(S)trike [0E] | (B)last [20E] | (D)efend [0E]: ").lower()
+            if move == 'b' and self.p['energy'] >= 20:
+                dmg = self.p['atk'] * 2
+                self.p['energy'] -= 20
                 b_hp -= dmg
-                print(f"You strike for {C_RED}{dmg} dmg!{C_RESET}")
+                print(f"Power blast for {C_RED}{dmg} dmg!{C_RESET}")
+            elif move == 's':
+                dmg = self.p['atk']
+                b_hp -= dmg
+                print(f"Strike for {dmg} dmg.")
             elif move == 'd':
-                print("You brace for impact...")
+                print("Bracing...")
             else:
-                print("Stunned by indecision!")
+                print("Indecision costs you!")
 
             if b_hp > 0:
-                b_dmg = max(0, random.randint(10, 20) - (self.p['def'] if move == 'd' else 0))
+                b_dmg = max(0, 15 - (self.p['def'] if move == 'd' else 0))
                 self.p['hp'] -= b_dmg
-                print(f"Boss counters for {C_RED}{b_dmg} dmg!{C_RESET}")
+                print(f"Boss deals {b_dmg} dmg.")
 
         if self.p['hp'] > 0:
             boss['defeated'] = True
             self.p['gold'] += 200
             self.add_xp(500)
-            print(f"\n{C_GREEN}{C_BOLD}VICTORY! Slew {boss['name']}. +200 ⟁, +500 XP.{C_RESET}")
+            print(f"{C_GREEN}VICTORY! Slew {boss['name']}.{C_RESET}")
         else:
-            print(f"\n{C_RED}{C_BOLD}CRITICAL SYSTEM FAILURE. You retreated.{C_RESET}")
+            print(f"{C_RED}FAILURE. Reprogramming required.{C_RESET}")
             self.p['hp'] = self.p['max_hp'] // 2
         self.save()
 
-    def cmd_shop(self, action='list', idx=None):
-        if action == 'buy' and idx is not None:
-            try:
-                item = self.vault['shop'][int(idx)]
-                if self.p['gold'] >= item['price']:
-                    self.p['gold'] -= item['price']
-                    if item['type'] == 'WEAPON': self.p['atk'] += item['atk']
-                    elif item['type'] == 'ARMOR': self.p['def'] += item['def']
-                    else: self.p['inventory'].append(item['name'])
-                    print(f"Purchased {item['name']}.")
-                    self.save()
-                else: print("Insufficient gold.")
-            except: print("Invalid Item ID.")
-        else:
-            print(f"\n{C_BOLD}--- GALACTIC MARKET ---{C_RESET}")
-            for i, item in enumerate(self.vault['shop']):
-                print(f"{i}: {C_CYAN}{item['name']:<15}{C_RESET} ({item['price']:>3} ⟁) - {C_DIM}{item['desc']}{C_RESET}")
-
-    def boot_sequence(self):
-        os.system('clear' if os.name == 'posix' else 'cls')
-        seq = [
-            f"{C_CYAN}GHOSTFORGE BIOS v{VERSION}{C_RESET}",
-            "CHECKING MEMORY BANKS... [ OK ]",
-            "INITIALIZING NEURAL GRID... [ OK ]",
-            "CONNECTING TO GALACTIC FORGE... [ OK ]",
-            "SCANNING VAULT SIGNATURE... [ OK ]",
-            f"{C_YELLOW}WARNING: UNAUTHORIZED POWER LEVELS DETECTED.{C_RESET}",
-            f"{C_BOLD}{C_GREEN}WELCOME TO THE SINGULARITY.{C_RESET}"
-        ]
-        for line in seq:
-            print(line)
-            time.sleep(0.05)
-        time.sleep(0.3)
-
     def interactive(self):
-        self.boot_sequence()
         print(self.get_banner())
         self.cmd_status()
 
         while True:
             try:
-                raw = input(f"{C_BOLD}{self.theme['primary']}forge>{C_RESET} ").strip()
+                raw = input(f"{C_BOLD}{self.theme['primary']}overseer>{C_RESET} ").strip()
                 if not raw: continue
                 parts = shlex.split(raw)
                 cmd = parts[0].lower()
+
+                # Aliases
+                if cmd == 's': cmd = 'status'
+                elif cmd == 'm': cmd = 'mission'
+                elif cmd == 'b': cmd = 'boss'
+
                 if cmd in ['exit', 'quit']: break
                 elif cmd == 'status': self.cmd_status()
-                elif cmd == 'shop': self.cmd_shop(parts[1] if len(parts)>1 else 'list', parts[2] if len(parts)>2 else None)
-                elif cmd == 'boss':
-                    c = self.vault['campaigns'][self.vault['active_campaign']]
-                    sub = parts[1].lower() if len(parts)>1 else 'list'
-                    if sub == 'list':
-                        for i, b in enumerate(c['bosses']):
-                            print(f"{i}: {'[X]' if b['defeated'] else '[ ]'} {b['name']}")
-                    elif sub == 'spawn':
-                        c['bosses'].append({"name": " ".join(parts[2:]), "defeated": False})
-                        self.save()
-                        print(f"Boss spawned: {' '.join(parts[2:])}")
-                    elif sub == 'fight': self.cmd_combat(parts[2])
                 elif cmd == 'mission':
                     c = self.vault['campaigns'][self.vault['active_campaign']]
-                    sub = parts[1].lower() if len(parts)>1 else 'list'
+                    sub = parts[1].lower() if len(parts) > 1 else 'list'
                     if sub == 'list':
                         for i, m in enumerate(c['missions']):
-                            print(f"{i}: {'[X]' if m['completed'] else '[ ]'} {m['title']}")
+                            print(f"{i}: [{'X' if m['completed'] else ' '}] {m['title']}")
                     elif sub == 'add':
-                        title = parts[2]
-                        script = parts[3] if len(parts) > 3 else None
-                        c['missions'].append({"title": title, "reward": 50, "completed": False, "script": script})
-                        self.save()
-                        print(f"Mission added: {title}")
-                    elif sub == 'complete':
-                        m = c['missions'][int(parts[2])]
-                        if not m['completed']:
-                            m['completed'] = True
-                            self.add_xp(m['reward'])
-                            self.p['gold'] += 25
-                            if m.get('script'):
-                                print(f"Executing payload: {m['script']}")
-                                subprocess.run(m['script'], shell=True)
+                        if len(parts) > 2:
+                            c['missions'].append({"title": parts[2], "reward": 50, "completed": False})
                             self.save()
-                            print("Mission synchronization complete.")
+                            print("Mission uploaded.")
+                        else: print("Missing title.")
+                    elif sub == 'complete':
+                        if len(parts) > 2:
+                            if self.hack_minigame():
+                                m = c['missions'][int(parts[2])]
+                                if not m['completed']:
+                                    m['completed'] = True
+                                    self.add_xp(m['reward'])
+                                    self.p['gold'] += 50
+                                    self.p['energy'] = min(self.p['max_energy'], self.p['energy'] + 10)
+                                    self.save()
+                        else: print("Missing ID.")
+                elif cmd == 'boss':
+                    c = self.vault['campaigns'][self.vault['active_campaign']]
+                    sub = parts[1].lower() if len(parts) > 1 else 'list'
+                    if sub == 'list':
+                        for i, b in enumerate(c['bosses']):
+                            print(f"{i}: [{'X' if b['defeated'] else ' '}] {b['name']}")
+                    elif sub == 'spawn':
+                        if len(parts) > 2:
+                            c['bosses'].append({"name": " ".join(parts[2:]), "defeated": False})
+                            self.save()
+                            print("Boss detected.")
+                        else: print("Missing name.")
+                    elif sub == 'fight':
+                        if len(parts) > 2: self.cmd_combat(parts[2])
+                        else: print("Missing ID.")
+                elif cmd == 'spec':
+                    if len(parts) > 1:
+                        if self.p['level'] >= 10 and not self.p['spec']:
+                            self.p['spec'] = parts[1]
+                            print(f"Path chosen: {parts[1]}")
+                            self.save()
+                        else: print("Level 10 required or path already chosen.")
+                    else: print("Specify: Netrunner, Enforcer, Architect.")
                 elif cmd == 'clear': os.system('clear' if os.name == 'posix' else 'cls')
-                elif cmd == 'help':
-                    print("Commands: status, mission <list|add|complete>, boss <list|spawn|fight>, shop, clear, exit")
-            except Exception as e: print(f"Error: {e}")
+                elif cmd == 'help': print("Commands: status (s), mission (m) <list|add|complete>, boss (b) <list|spawn|fight>, spec <name>, clear, exit")
+                else: print(f"Unknown: {cmd}")
+            except Exception as e: print(f"System Error: {e}")
 
 # --- CLI ---
 
 def main():
-    parser = argparse.ArgumentParser(description=f"GhostForge v{VERSION} - Galactic Forge")
+    parser = argparse.ArgumentParser(description=f"GhostForge Overseer v{VERSION}")
     parser.add_argument('command', nargs='?', default='forge')
     parser.add_argument('params', nargs='*', default=[])
     args = parser.parse_args()
 
     forge = Forge()
     cmd = args.command.lower()
-    if cmd == 'forge': forge.interactive()
-    elif cmd == 'status': forge.cmd_status()
-    elif cmd == 'mission':
-        c = forge.vault['campaigns'][forge.vault['active_campaign']]
-        if not args.params or args.params[0] == 'list':
-            for i, m in enumerate(c['missions']): print(f"{i}: {'[X]' if m['completed'] else '[ ]'} {m['title']}")
-        elif args.params[0] == 'add':
-            c['missions'].append({"title": args.params[1], "reward": 50, "completed": False})
-            forge.save()
-            print(f"Mission added: {args.params[1]}")
-        elif args.params[0] == 'complete':
-            m = c['missions'][int(args.params[1])]
-            m['completed'] = True
-            forge.add_xp(m['reward'])
-            forge.p['gold'] += 25
-            forge.save()
-            print("Mission complete.")
+
+    if cmd in ['status', 's']: forge.cmd_status()
+    elif cmd == 'forge': forge.interactive()
     else: forge.interactive()
 
 if __name__ == "__main__":

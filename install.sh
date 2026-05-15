@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# GhostForge CLI v7 Global Installer
-# Forges a link to the Galactic Forge in your PATH
+# GhostForge CLI v8 Global Installer
+# Forges a link to the Overseer in your PATH
 
 echo "Forging GhostForge Global Link..."
 

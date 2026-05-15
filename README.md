@@ -1,45 +1,33 @@
-# GhostForge CLI v7.0: Galactic Forge 🌌⚔️
+# GhostForge v8.0: The Overseer 👁️⚔️
 
-GhostForge is an insane, offline terminal-based RPG project manager for software engineers who want to conquer their codebase like a galaxy.
+GhostForge Overseer is the next generation of terminal project management. With upgraded UI layouts, deep combat mechanics, and specialization paths, it turns your workflow into a professional-grade RPG.
 
-## ⚔️ New in v7.0: Galactic Forge
-- **Boss Combat System**: Bosses are no longer just milestones—they are encounters. Use `Strike` and `Defend` to defeat them using your gear and stats (HP, ATK, DEF).
-- **Equipment System**: Visit the Market to buy **Cyberdecks** and **Icepick Shields** to boost your combat effectiveness.
-- **Global Installation**: Install GhostForge once and run it from any directory in your system.
-- **Scriptable Missions**: Attach shell commands to your missions; they execute automatically upon completion (e.g., auto-commit, auto-deploy).
-- **Galactic Boot Sequence**: High-immersion terminal startup sequence.
+## ⚔️ New in v8.0: The Overseer
+- **Energy System**: Missions and battles now consume/restore **Energy (ENG)**. Manage your stamina to perform special moves.
+- **Class Specializations**: Reach Level 10 to specialize as a **Netrunner** (+XP), **Enforcer** (+Combat), or **Architect** (+Gold).
+- **Hacking Minigame**: High-security missions now require a manual decryption bypass. Match the binary string to succeed.
+- **Box-Drawing UI**: Completely redesigned profiles and status headers using professional ASCII box-drawing characters.
+- **Auto-Archiving**: The Overseer automatically backs up your vault every 24 hours to ensure zero data loss.
+- **Command Aliases**: Move fast with shorthands: `s` (status), `m` (mission), `b` (boss).
 
 ## 🚀 Global Installation
-
-To install GhostForge globally on your system:
-
 ```bash
-chmod +x install.sh
 ./install.sh
 ```
 
-Now you can simply type `ghostforge` from any terminal window.
+## 🕹️ Field Manual
 
-## 🕹️ Master Manual
+### 1. Specializations (LVL 10+)
+- **Netrunner**: Gains a permanent 20% XP bonus for all tasks.
+- **Enforcer**: Unlocks heavy-hitting combat moves and higher base ATK.
+- **Architect**: Multiplies Gold bounty from all completed missions.
 
-### 1. The Interactive Forge
-Simply run `ghostforge` (or `python3 ghostforge.py`) to enter the persistent command shell.
+### 2. Energy Mechanics
+- **Restore ENG**: Completing missions restores 10 Energy.
+- **Special Moves**: Use `Blast` during boss fights for double damage at the cost of 20 ENG.
 
-- `status`: Check your HP, XP, Gold, and active stats.
-- `mission add "Task" "Command"`: Create a quest. The optional command runs on completion!
-- `mission complete <id>`: Finish the task and trigger the payload.
-- `boss spawn "Name"`: Summon a legendary adversary.
-- `boss fight <id>`: Enter the turn-based combat arena.
-- `shop buy <id>`: Upgrade your hardware.
-
-### 2. Character Progression
-- **Leveling**: Increases Max HP and grants Skill Points.
-- **Combat Stats**: ATK (Attack) and DEF (Defense) are modified by your equipment.
-- **HP Management**: HP is restored upon level up or by certain items.
-
-### 3. Technical Mastery
-- **Vault Location**: Your data is now securely stored at `~/.ghostforge_vault.json`.
-- **Backups**: Automatically tracked in `~/.ghostforge_backups`.
+### 3. Decryption Minigame
+When completing a mission, you may be prompted to enter a binary sequence. Match it exactly within the time limit to claim your reward.
 
 ---
-**Zero Dependencies. Maximum Immersion. Forge your Galaxy.**
+**Zero Dependencies. Maximum Immersion. Stay Productive.**
