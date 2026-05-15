@@ -1,13 +1,14 @@
-# GhostForge CLI v2.0: The Ultimate Forge ⚒️🌌
+# GhostForge CLI v3.0: Ascension ⟁🌌
 
-GhostForge is the terminal command center for engineers who want to turn their project grind into a legendary RPG.
+GhostForge is the ultimate offline terminal command center for software engineers. Turn your project grind into a legendary RPG quest.
 
-## ⚔️ The Ultimate Forge Features
-- **Project Pulse**: A visual ASCII activity graph in your profile. See your momentum!
-- **Economy & Shop**: Earn **Gold** ⟁ from missions. Spend it on titles, XP boosts, and gear in the Black Market Shop.
-- **Titles & Classes**: Evolve from a *Novice (The Unforged)* to a *Senior Architect (Ghost of the Machine)*.
-- **Masterful Shell**: Enhanced interactive mode with tab-completion (`readline`) and robust command parsing (`shlex`).
-- **Aesthetic Overhaul**: New ASCII banners, progress bars, and typing effects.
+## ⚔️ New in v3.0: Ascension Update
+- **Skill Tree**: Spend **Skill Points (SP)** earned at level-up on permanent perks like *Efficiency* (+XP), *Greed* (+Gold), and *Luck*.
+- **Daily Quests**: Get a fresh challenge every day to keep your momentum.
+- **Project Heatmap**: The Project Pulse now features a 30-day activity heatmap.
+- **Narrative Encounters**: Atmospheric events and random encounters when you enter the Forge.
+- **Boss Portraits**: Unique ASCII art for legendary project milestones.
+- **Inventory Use**: Use items like the *Rubber Duck* to gain instant XP or buffs.
 
 ## 🚀 Quick Start
 
@@ -20,30 +21,34 @@ GhostForge is the terminal command center for engineers who want to turn their p
 ```bash
 python3 ghostforge.py
 ```
-*Try typing `help` once inside.*
+*The Forge is now interactive by default.*
 
-### 3. Quick CLI Commands
-```bash
-python3 ghostforge.py vault                   # View Profile & Pulse
-python3 ghostforge.py mission add "Feature"   # Start a mission
-python3 ghostforge.py mission complete 0      # Claim XP & Gold
-```
+### 3. Core Commands
+- `vault`: View your Profile, Skills, and Pulse Heatmap.
+- `skills`: Open the Skill Tree to spend SP.
+- `daily`: Check today's quest.
+- `mission [list|add|complete]`: Manage your tasks.
+- `boss [list|spawn|slay]`: Conquer project milestones.
+- `shop [buy <id>]`: Visit the Black Market.
+- `use <item>`: Use an item from your inventory.
 
-## 💎 Gamer's Guide
+## 💎 The Ascension Guide
 
-### 📈 Leveling Up
-Complete missions to gain XP. Each level up increases the XP requirement but unlocks new class tiers and titles.
+### 🧬 Skills & SP
+Every time you level up, you gain **1 Skill Point (SP)**.
+- **Efficiency**: Increases XP gain from all sources.
+- **Greed**: Increases the Gold bounty from missions.
+- **Luck**: (Coming Soon) Increases chances for critical rewards.
 
-### 💰 The Economy
-Every mission completed grants Gold.
-- Type `shop` in the Forge to see available items.
-- Type `shop buy <id>` to spend your hard-earned ⟁.
+### 📊 Project Heatmap
+`vault` now shows a 30-day grid.
+- ░ : No activity
+- ▒ : Light work
+- ▓ : Focused forge
+- █ : Legendary grind
 
-### 👹 Boss Slaying
-Bosses are major project milestones. Slaying them grants massive XP, 100 Gold, and a unique **Artifact** for your collection.
-
-### 📊 Project Pulse
-Your Vault shows a 7-day activity graph. Keep the bars high to maintain your productivity streak!
+### 👹 Boss Portraits
+Spawn "The Bug King" or "Deadline Specter" to see their true forms. Slaying them grants massive XP and artifacts.
 
 ---
 **Strictly Offline. Zero Dependencies. Maximum Glory.**
