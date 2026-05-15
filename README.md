@@ -1,41 +1,42 @@
-# GhostForge v10.0: The Singularity Engine 🌌🧠
+# GhostForge v11.0: The Galactic Nexus 🌌🤝
 
-GhostForge is the ultimate high-immersion project management engine for high-tier software engineers. Turn your terminal into a command center where code is conquered, not just managed.
+GhostForge is the ultimate offline terminal-based RPG project manager. Version 11 introduces **Neural Link**, allowing you and your friends to conquer your engineering goals together on the same machine.
 
-## ⚔️ New in v10.0: The Singularity Update
-- **Windowed UI System**: Professional ASCII HUD and log windows provide a high-density, real-time overview of your engine status.
-- **Auto-Forge (Git Integration)**: Automatically scan your local repository's git logs to generate mission suggestions based on actual code changes.
-- **Drone Fabrication**: Defeat bosses to earn **Scrap (⚙)**, then use the Lab to fabricate and deploy specialized combat and hacking drones.
-- **Advanced Combat**: Engage in logical combat where `Hack` moves deal damage proportional to your system efficiency.
-- **Global Shell Completion**: Native bash completion support for all core engine commands.
+## ⚔️ New in v11.0: Galactic Nexus
+- **Neural Link (Local Social)**: A shared leaderboard and deeds board for all users on the same machine. Compete with your friends!
+- **Persona Engine**: The Forge now has a personality (Aggressive, Cynical, or Helpful) that reacts to your progress.
+- **macOS & Zsh Native**: Optimized for the Mac terminal with native Zsh completion support.
+- **Neural HUD v2**: A redesigned, high-density dashboard for tracking your stats and social standing.
 
-## 🚀 Deployment
+## 🚀 Mac & Friend's Deployment
 
-Execute the global deployment script:
+To install GhostForge on your Mac (or your friend's):
 
+1. **Clone/Download** the script.
+2. **Launch the Bridge**:
 ```bash
 chmod +x install.sh
 ./install.sh
 ```
+3. **Connect**:
+   Type `ghostforge` to enter the Nexus.
 
 ## 🕹️ Operations Manual
 
-### 1. Engine Core
-Run `ghostforge` to initialize the Singularity Engine.
+### 1. Social & Stats
+- `status` (or `s`): View your core HUD.
+- `link`: See the Neural Link shared board. Discover what other users on this machine have achieved.
+- `mission <list|add|complete>`: Manage your project saga.
+- `help`: Access the knowledge base.
 
-- `status` (or `s`): Render the System HUD.
-- `autoforge`: Sync with local Git logs for mission suggestions.
-- `mission <list|add|complete>`: Manage your engineering deeds.
-- `boss <list|spawn|fight>`: Engage project milestones in the arena.
-- `fabricate`: Construct specialized hardware using Scrap.
+### 2. The Persona
+Your Forge's personality is randomized upon initialization.
+- **Aggressive**: Demands results. High stakes.
+- **Cynical**: Doubts your capabilities. Sarcastic rewards.
+- **Helpful**: Supportive and encouraging.
 
-### 2. Drone Lab
-Fabricate drones to permanently boost your core system metrics:
-- **Scout Drone**: Precision hacking and system bypass.
-- **Striker Drone**: Aggressive logical damage output.
-
-### 3. Git-Powered Workflow
-Use `autoforge` within a git repository. The engine will read your recent commit history and suggest missions, allowing you to quickly gamify your actual work output.
+### 3. Sharing the Forge
+Since data is stored in `~/.ghostforge_vault.json`, each user on the Mac gets their own character. The `Neural Link` automatically bridges these vaults through a shared local file.
 
 ---
-**Zero Dependencies. Maximum Immersion. Total Code Sovereignty.**
+**Zero Dependencies. Optimized for macOS. Total Engineering Glory.**

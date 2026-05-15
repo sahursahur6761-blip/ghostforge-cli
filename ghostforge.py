@@ -19,7 +19,9 @@ except ImportError:
 # --- Constants & Configuration ---
 VAULT_FILE = os.path.expanduser('~/.ghostforge_vault.json')
 BACKUP_DIR = os.path.expanduser('~/.ghostforge_backups')
-VERSION = "10.0.0"
+# Shared board for "Friends" on the same machine (simulated social)
+SHARED_LINK = os.path.join('/tmp', '.ghostforge_neural_link.json')
+VERSION = "11.0.0"
 
 C_RED = "\033[31m"
 C_GREEN = "\033[32m"
@@ -34,12 +36,12 @@ C_RESET = "\033[0m"
 
 # --- UI Engine ---
 
-def draw_box(title, lines, width=60):
-    print(f"{C_CYAN}┌── {C_BOLD}{title}{C_RESET}{C_CYAN} {'─' * (width - len(title) - 5)}┐{C_RESET}")
+def draw_box(title, lines, width=60, color=C_CYAN):
+    print(f"{color}┌── {C_BOLD}{title}{C_RESET}{color} {'─' * (width - len(title) - 5)}┐{C_RESET}")
     for line in lines:
         content = line.ljust(width - 2)
-        print(f"{C_CYAN}│{C_RESET} {content} {C_CYAN}│{C_RESET}")
-    print(f"{C_CYAN}└{'─' * (width - 2)}┘{C_RESET}")
+        print(f"{color}│{C_RESET} {content} {color}│{C_RESET}")
+    print(f"{color}└{'─' * (width - 2)}┘{C_RESET}")
 
 # --- Core Engine ---
 
@@ -48,8 +50,9 @@ class Forge:
         self.vault_path = vault_path or VAULT_FILE
         self.vault = self.load_vault()
         self.p = self.vault['player']
-        self.theme = self.p.get('theme', 'Cyberpunk')
-        self.save() # Ensure vault exists
+        self.persona = self.vault.get('persona', random.choice(['Aggressive', 'Cynical', 'Helpful']))
+        self.vault['persona'] = self.persona
+        self.save()
         self.auto_backup()
 
     def load_vault(self):
@@ -58,9 +61,12 @@ class Forge:
         try:
             with open(self.vault_path, 'r') as f:
                 return self.migrate_vault(json.load(f))
-        except (json.JSONDecodeError, IOError):
-            print(f"{C_RED}ERROR: Vault collapse. Re-initializing...{C_RESET}")
+        except:
             return self.get_default_vault()
+
+    def get_user_name(self):
+        try: return os.getlogin()
+        except: return os.environ.get('USER', 'Pilot')
 
     def get_default_vault(self):
         return {
@@ -68,22 +74,17 @@ class Forge:
                 "level": 1, "xp": 0, "gold": 0, "sp": 0, "scrap": 0,
                 "hp": 100, "max_hp": 100, "atk": 10, "def": 5, "hack": 10,
                 "class": "Novice", "inventory": [], "drone": None,
-                "skills": {"speed": 0, "power": 0}, "theme": "Cyberpunk"
+                "name": self.get_user_name()
             },
             "campaigns": {"Default": {"missions": [], "bosses": []}},
             "active_campaign": "Default",
-            "history": [], "last_backup": None,
-            "drones": {
-                "Scout": {"cost": 100, "description": "+5 Hacking"},
-                "Striker": {"cost": 250, "description": "+10 Attack"}
-            }
+            "history": [], "last_backup": None
         }
 
     def migrate_vault(self, v):
         p = v.setdefault('player', {})
-        p.setdefault('scrap', 0)
-        p.setdefault('hack', 10)
-        v.setdefault('drones', self.get_default_vault()['drones'])
+        p.setdefault('name', self.get_user_name())
+        v.setdefault('history', [])
         return v
 
     def save(self):
@@ -92,161 +93,104 @@ class Forge:
             with open(temp_path, 'w') as f:
                 json.dump(self.vault, f, indent=4)
             os.replace(temp_path, self.vault_path)
-        except IOError as e: print(f"Write error: {e}")
+            self.update_neural_link()
+        except: pass
+
+    def update_neural_link(self):
+        # Update shared machine board
+        try:
+            data = {}
+            if os.path.exists(SHARED_LINK):
+                with open(SHARED_LINK, 'r') as f: data = json.load(f)
+            data[self.p['name']] = {
+                "level": self.p['level'],
+                "deed": self.vault['history'][-1]['event'] if self.vault['history'] else "Initializing...",
+                "last_seen": datetime.now().strftime("%H:%M")
+            }
+            with open(SHARED_LINK, 'w') as f: json.dump(data, f)
+        except: pass
 
     def auto_backup(self):
-        now = datetime.now()
-        last = self.vault.get('last_backup')
-        if not last or (now - datetime.fromisoformat(last)).days >= 1:
-            if not os.path.exists(BACKUP_DIR): os.makedirs(BACKUP_DIR)
-            bp = os.path.join(BACKUP_DIR, f"vault_{now.strftime('%Y%m%d')}.json")
-            if os.path.exists(self.vault_path):
-                shutil.copy2(self.vault_path, bp)
-                self.vault['last_backup'] = now.isoformat()
-                self.save()
+        if not os.path.exists(BACKUP_DIR): os.makedirs(BACKUP_DIR)
+        shutil.copy2(self.vault_path, os.path.join(BACKUP_DIR, "latest.json"))
 
     # --- Gameplay ---
 
+    def speak(self, text):
+        colors = {'Aggressive': C_RED, 'Cynical': C_MAGENTA, 'Helpful': C_GREEN}
+        prefix = f"[{self.persona}]"
+        print(f"{colors.get(self.persona, C_WHITE)}{prefix} {text}{C_RESET}")
+
     def add_xp(self, amount):
         self.p['xp'] += amount
-        while self.p['xp'] >= self.p['level'] * 100:
-            self.p['xp'] -= self.p['level'] * 100
+        if self.p['xp'] >= self.p['level'] * 100:
             self.p['level'] += 1
-            self.p['sp'] += 2
             self.p['max_hp'] += 20
             self.p['hp'] = self.p['max_hp']
-            print(f"{C_YELLOW}{C_BOLD}>>> SINGULARITY ASCENSION: LEVEL {self.p['level']} <<<{C_RESET}")
+            self.speak(f"POWER OVERWHELMING. Level {self.p['level']} reached.")
 
     def cmd_status(self):
         p = self.p
-        stats = [
-            f"{C_CYAN}LVL {p['level']}{C_RESET} | {C_GREEN}HP {p['hp']}/{p['max_hp']}{C_RESET} | {C_YELLOW}⟁ {p['gold']}{C_RESET} | {C_MAGENTA}⚙ {p['scrap']}{C_RESET}",
-            f"{C_DIM}ATK:{p['atk']} DEF:{p['def']} HACK:{p['hack']}{C_RESET} | {C_BLUE}DRONE:{str(p['drone']):<10}{C_RESET}",
-            f"{C_DIM}Campaign: {self.vault['active_campaign']}{C_RESET}"
+        hud = [
+            f"USER: {p['name']} | LVL {p['level']} | HP {p['hp']}/{p['max_hp']} | ⟁ {p['gold']}",
+            f"STATS: ATK {p['atk']} DEF {p['def']} HACK {p['hack']} | SP {p['sp']}",
+            f"ACTIVE: {self.vault['active_campaign']} | DRONE: {p['drone']}"
         ]
-        draw_box(f"SYSTEM HUD v{VERSION}", stats)
+        draw_box("NEURAL HUD v11.0", hud, color=C_BLUE)
 
-    def cmd_auto_forge(self):
-        print(f"{C_BLUE}Scanning git logs...{C_RESET}")
-        try:
-            output = subprocess.check_output(["git", "log", "-n", "3", "--oneline"], stderr=subprocess.STDOUT).decode()
-            lines = output.strip().split("\n")
-            if lines:
-                print(f"{C_YELLOW}Git activity detected. Suggestions for missions:{C_RESET}")
-                for line in lines:
-                    print(f" - Suggestion: {line.split(' ', 1)[1]}")
-            else: print("No recent commits found.")
-        except: print("Not a git repository or git not found.")
-
-    def cmd_combat(self, boss_idx):
-        c = self.vault['campaigns'][self.vault['active_campaign']]
-        try: boss = c['bosses'][int(boss_idx)]
-        except: print("Boss ID invalid."); return
-
-        b_hp = 200 + (self.p['level'] * 20)
-        print(f"\n{C_RED}!!! COMBAT ENGAGED: {boss['name']} !!!{C_RESET}")
-
-        while b_hp > 0 and self.p['hp'] > 0:
-            print(f"{C_CYAN}YOU: {self.p['hp']} HP{C_RESET} | {C_RED}BOSS: {b_hp} HP{C_RESET}")
-            move = input(f"{C_BOLD}(S)trike | (H)ack | (D)efend: {C_RESET}").lower()
-
-            if move == 'h' and random.randint(1, 100) < (self.p['hack'] * 5):
-                dmg = self.p['hack'] * 3
-                b_hp -= dmg
-                print(f"{C_CYAN}SYSTEM BYPASS! {dmg} logical damage.{C_RESET}")
-                continue
-
-            dmg = self.p['atk'] + (10 if move == 's' else 0)
-            b_hp -= dmg
-            print(f"You deal {dmg} damage.")
-
-            if b_hp > 0:
-                boss_dmg = max(0, 20 - (self.p['def'] if move == 'd' else 0))
-                self.p['hp'] -= boss_dmg
-                print(f"Boss counters for {boss_dmg} damage.")
-
-        if self.p['hp'] > 0:
-            boss['defeated'] = True
-            self.p['scrap'] += 50
-            self.add_xp(500)
-            print(f"{C_GREEN}BOSS DEFEATED. +50 Scrap, +500 XP.{C_RESET}")
-        else:
-            self.p['hp'] = self.p['max_hp'] // 2
-            print(f"{C_RED}SYSTEM SHUTDOWN. Re-initializing at 50% HP.{C_RESET}")
-        self.save()
-
-    def cmd_fabricate(self, drone_type=None):
-        if not drone_type:
-            print(f"\n{C_BOLD}--- FABRICATION LAB ---{C_RESET} (Scrap: {self.p['scrap']})")
-            for name, data in self.vault['drones'].items():
-                print(f" - {C_CYAN}{name}{C_RESET}: {data['cost']} Scrap | {data['description']}")
+    def cmd_link(self):
+        if not os.path.exists(SHARED_LINK):
+            print("Neural Link offline. No other users detected.")
             return
-
-        if drone_type in self.vault['drones']:
-            cost = self.vault['drones'][drone_type]['cost']
-            if self.p['scrap'] >= cost:
-                self.p['scrap'] -= cost
-                self.p['drone'] = drone_type
-                if drone_type == 'Scout': self.p['hack'] += 5
-                elif drone_type == 'Striker': self.p['atk'] += 10
-                print(f"{C_GREEN}Drone {drone_type} fabricated and deployed.{C_RESET}")
-                self.save()
-            else: print("Insufficient scrap.")
+        with open(SHARED_LINK, 'r') as f: data = json.load(f)
+        lines = [f"{u:<12} | LVL {d['level']:<2} | {d['deed']}" for u, d in data.items()]
+        draw_box("NEURAL LINK (LOCAL USERS)", lines, color=C_MAGENTA)
 
     def interactive(self):
         os.system('clear' if os.name == 'posix' else 'cls')
-        print(f"{C_CYAN}{C_BOLD}--- GHOSTFORGE SINGULARITY ENGINE v{VERSION} ---{C_RESET}")
+        self.speak("Neural connection established. Welcome to the Galactic Nexus.")
         self.cmd_status()
 
         while True:
             try:
-                raw = input(f"{C_BOLD}{C_GREEN}engine>{C_RESET} ").strip()
+                raw = input(f"{C_BOLD}{C_BLUE}nexus>{C_RESET} ").strip()
                 if not raw: continue
                 parts = shlex.split(raw)
                 cmd = parts[0].lower()
 
                 if cmd in ['exit', 'quit']: break
-                elif cmd in ['status', 's']: self.cmd_status()
-                elif cmd == 'autoforge': self.cmd_auto_forge()
+                elif cmd == 's' or cmd == 'status': self.cmd_status()
+                elif cmd == 'link': self.cmd_link()
                 elif cmd == 'mission':
                     c = self.vault['campaigns'][self.vault['active_campaign']]
-                    sub = parts[1].lower() if len(parts) > 1 else 'list'
-                    if sub == 'list':
+                    if parts[1] == 'list':
                         lines = [f"{i}: [{'X' if m['completed'] else ' '}] {m['title']}" for i, m in enumerate(c['missions'])]
                         draw_box("MISSION LOG", lines)
-                    elif sub == 'add':
+                    elif parts[1] == 'add':
                         c['missions'].append({"title": parts[2], "completed": False})
                         self.save()
-                        print("Mission logged.")
-                    elif sub == 'complete':
+                        self.speak("Mission logged. Don't fail me.")
+                    elif parts[1] == 'complete':
                         m = c['missions'][int(parts[2])]
                         m['completed'] = True
                         self.add_xp(50)
                         self.p['gold'] += 50
+                        self.vault['history'].append({"event": f"Completed {m['title']}"})
                         self.save()
-                elif cmd == 'boss':
-                    c = self.vault['campaigns'][self.vault['active_campaign']]
-                    sub = parts[1].lower() if len(parts) > 1 else 'list'
-                    if sub == 'list':
-                        for i, b in enumerate(c['bosses']): print(f"{i}: {'[X]' if b['defeated'] else '[ ]'} {b['name']}")
-                    elif sub == 'spawn':
-                        c['bosses'].append({"name": parts[2], "defeated": False})
-                        self.save()
-                    elif sub == 'fight': self.cmd_combat(parts[2])
-                elif cmd == 'fabricate':
-                    self.cmd_fabricate(parts[1] if len(parts) > 1 else None)
-                elif cmd == 'clear': os.system('clear' if os.name == 'posix' else 'cls')
-                elif cmd == 'help': print("status, autoforge, mission, boss, fabricate, clear, exit")
+                        self.speak("Task verified. Currency allocated.")
+                elif cmd == 'help': print("status (s), link, mission <list|add|complete>, exit")
+                else: self.speak(f"Unknown command '{cmd}'. Try harder.")
             except Exception as e: print(f"Error: {e}")
 
 def main():
-    parser = argparse.ArgumentParser(description=f"GhostForge Singularity Engine v{VERSION}")
+    parser = argparse.ArgumentParser(description="GhostForge Nexus v11")
     parser.add_argument('command', nargs='?', default='forge')
     parser.add_argument('params', nargs='*', default=[])
     args = parser.parse_args()
 
     f = Forge()
     if args.command == 'status' or args.command == 's': f.cmd_status()
+    elif args.command == 'link': f.cmd_link()
     else: f.interactive()
 
 if __name__ == "__main__":

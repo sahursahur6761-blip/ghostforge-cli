@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# GhostForge Singularity v10 Global Installer
-# Initializing the Singularity Engine
+# GhostForge Galactic v11 Global Installer
+# Connect to the Neural Link
 
-echo "Connecting to the Singularity..."
+echo "Initializing Neural Bridge..."
 
 # Path setup
 TARGET_DIR="/usr/local/bin"
@@ -12,7 +12,7 @@ LINK_NAME="ghostforge"
 
 if ! command -v python3 &> /dev/null
 then
-    echo "Error: Python 3 is required for the Singularity Engine."
+    echo "Error: Python 3 is required."
     exit 1
 fi
 
@@ -21,19 +21,27 @@ chmod +x "$SOURCE_FILE"
 if [ -w "$TARGET_DIR" ]; then
     ln -sf "$SOURCE_FILE" "$TARGET_DIR/$LINK_NAME"
 else
-    echo "Elevated privileges required for global installation..."
+    echo "Requesting sudo for global link..."
     sudo ln -sf "$SOURCE_FILE" "$TARGET_DIR/$LINK_NAME"
 fi
 
-# Basic Bash Completion
-COMP_FILE="/etc/bash_completion.d/ghostforge"
-if [ -d "/etc/bash_completion.d" ] && [ -w "/etc/bash_completion.d" ]; then
-    echo "Installing bash completion..."
-    echo 'complete -W "status mission boss fabricate autoforge clear exit" ghostforge' > "$COMP_FILE"
+# ZSH Completion (Standard on Mac)
+ZSH_COMP_DIR="${HOME}/.zsh/completion"
+mkdir -p "$ZSH_COMP_DIR"
+cat <<EOF > "${ZSH_COMP_DIR}/_ghostforge"
+#compdef ghostforge
+_arguments '1: :((status mission link clear exit))'
+EOF
+
+if [[ "$SHELL" == *"zsh"* ]]; then
+    if ! grep -q "fpath=(~/.zsh/completion \$fpath)" ~/.zshrc; then
+        echo "fpath=(~/.zsh/completion \$fpath)" >> ~/.zshrc
+        echo "autoload -U compinit && compinit" >> ~/.zshrc
+        echo "Added Zsh completion to ~/.zshrc"
+    fi
 fi
 
-echo "--- SINGULARITY INITIALIZED ---"
-echo "GhostForge v10 is now globally active."
+echo "--- INSTALL COMPLETE ---"
+echo "GhostForge Galactic Nexus active."
 echo "Type 'ghostforge' to begin."
-echo "-------------------------------"
 ghostforge s
