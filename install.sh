@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# GhostForge Nexus v9 Global Installer
-# Connect your terminal to the Singularity
+# GhostForge Singularity v10 Global Installer
+# Initializing the Singularity Engine
 
-echo "Initializing Nexus Bridge..."
+echo "Connecting to the Singularity..."
 
 # Path setup
 TARGET_DIR="/usr/local/bin"
@@ -12,7 +12,7 @@ LINK_NAME="ghostforge"
 
 if ! command -v python3 &> /dev/null
 then
-    echo "Error: Python 3 is required for the Nexus."
+    echo "Error: Python 3 is required for the Singularity Engine."
     exit 1
 fi
 
@@ -25,8 +25,15 @@ else
     sudo ln -sf "$SOURCE_FILE" "$TARGET_DIR/$LINK_NAME"
 fi
 
-echo "--- INSTALLATION COMPLETE ---"
-echo "GhostForge Nexus v9 is now globally available."
-echo "Type 'ghostforge' to enter the Forge."
-echo "------------------------------"
+# Basic Bash Completion
+COMP_FILE="/etc/bash_completion.d/ghostforge"
+if [ -d "/etc/bash_completion.d" ] && [ -w "/etc/bash_completion.d" ]; then
+    echo "Installing bash completion..."
+    echo 'complete -W "status mission boss fabricate autoforge clear exit" ghostforge' > "$COMP_FILE"
+fi
+
+echo "--- SINGULARITY INITIALIZED ---"
+echo "GhostForge v10 is now globally active."
+echo "Type 'ghostforge' to begin."
+echo "-------------------------------"
 ghostforge s

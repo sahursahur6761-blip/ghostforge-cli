@@ -1,45 +1,41 @@
-# GhostForge CLI v9.0: The Nexus Bridge 🌌🛰️
+# GhostForge v10.0: The Singularity Engine 🌌🧠
 
-GhostForge is the ultimate offline terminal-based RPG project manager for software engineers. Forge your projects, automate your workflow, and conquer the codebase.
+GhostForge is the ultimate high-immersion project management engine for high-tier software engineers. Turn your terminal into a command center where code is conquered, not just managed.
 
-## ⚔️ New in v9.0: The Nexus
-- **Drone Companions**: Equippable drones like the *Viper* (+ATK) or *Mender* (+HP regen) provide powerful passive buffs.
-- **Manual Stat Allocation**: Use your **Skill Points (SP)** to manually increase ATK, DEF, and HACKING stats.
-- **Combat Hacking**: During boss fights, use the `Hack` command to deal high damage based on your Hacking stat.
-- **Improved HUD**: A high-density dashboard showing all core stats, active drones, and campaign progress.
+## ⚔️ New in v10.0: The Singularity Update
+- **Windowed UI System**: Professional ASCII HUD and log windows provide a high-density, real-time overview of your engine status.
+- **Auto-Forge (Git Integration)**: Automatically scan your local repository's git logs to generate mission suggestions based on actual code changes.
+- **Drone Fabrication**: Defeat bosses to earn **Scrap (⚙)**, then use the Lab to fabricate and deploy specialized combat and hacking drones.
+- **Advanced Combat**: Engage in logical combat where `Hack` moves deal damage proportional to your system efficiency.
+- **Global Shell Completion**: Native bash completion support for all core engine commands.
 
-## 🚀 How to Download & Install
+## 🚀 Deployment
 
-To install GhostForge globally on your system:
+Execute the global deployment script:
 
-1. **Download the source**:
-   Clone this repository or download `ghostforge.py` and `install.sh`.
-
-2. **Run the Installer**:
 ```bash
 chmod +x install.sh
 ./install.sh
 ```
 
-3. **Verify**:
-   Type `ghostforge s` from anywhere.
+## 🕹️ Operations Manual
 
-## 🕹️ Nexus Field Manual
+### 1. Engine Core
+Run `ghostforge` to initialize the Singularity Engine.
 
-### 1. The Interactive Shell
-Simply run `ghostforge` to enter the **Nexus Bridge**.
+- `status` (or `s`): Render the System HUD.
+- `autoforge`: Sync with local Git logs for mission suggestions.
+- `mission <list|add|complete>`: Manage your engineering deeds.
+- `boss <list|spawn|fight>`: Engage project milestones in the arena.
+- `fabricate`: Construct specialized hardware using Scrap.
 
-- `status` (or `s`): View your core HUD.
-- `upgrade <stat>`: Spend 1 SP to increase `atk`, `def`, or `hack`.
-- `mission add "Task"`: Create a new project quest.
-- `mission complete <id>`: Finish a task and gain XP, Gold, and potential Drone repairs.
-- `boss fight <id>`: Enter the Nexus Arena. Use `Hack` for critical logic damage.
-- `shop buy <id>`: Purchase advanced weaponry or **Drones**.
+### 2. Drone Lab
+Fabricate drones to permanently boost your core system metrics:
+- **Scout Drone**: Precision hacking and system bypass.
+- **Striker Drone**: Aggressive logical damage output.
 
-### 2. Drone Mechanics
-Drones are equippable companions that sit in your `DRONE` slot.
-- **Viper Drone**: Increases your base damage in all combat encounters.
-- **Mender Drone**: Repairs 5 HP automatically after every successful mission completion.
+### 3. Git-Powered Workflow
+Use `autoforge` within a git repository. The engine will read your recent commit history and suggest missions, allowing you to quickly gamify your actual work output.
 
 ---
-**Strictly Offline. Zero Dependencies. Legendary Productivity.**
+**Zero Dependencies. Maximum Immersion. Total Code Sovereignty.**
