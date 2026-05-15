@@ -6,6 +6,7 @@ import argparse
 import time
 import shlex
 import random
+import shutil
 from datetime import datetime, timedelta
 
 # Try to import readline for better interactive experience
@@ -16,7 +17,8 @@ except ImportError:
 
 # --- Constants ---
 VAULT_FILE = 'vault.json'
-VERSION = "4.0.0"
+BACKUP_DIR = '.forge_backups'
+VERSION = "5.0.1"
 
 # --- Theming Engine ---
 THEMES = {
@@ -36,7 +38,7 @@ THEMES = {
         "primary": "\033[31m", # Red
         "secondary": "\033[33m", # Yellow
         "accent": "\033[35m", # Magenta
-        "banner": "🔥🔥🔥🔥🔥",
+        "banner": "🔥🔥🔥🔥█",
     }
 }
 
@@ -58,7 +60,7 @@ def get_banner(theme_name="Cyberpunk"):
   ▟█    █    ▟█  ▟█     ▟█    █               ▟█ ▟█    █
   ▟█    █    ▟█  ▟█     ▟█    █               ▟█ ▟█    █
    ▜████▛    ▜█  ▜█      ▜████▛     ▜███████▛    ▜████▛
-{C_RESET}{s}{C_DIM}        ⚡  T H E   C A M P A I G N   U P D A T E   v{VERSION}  ⚡
+{C_RESET}{s}{C_DIM}        🏰  T H E   C I T A D E L   U P D A T E   v{VERSION}  🏰
 {C_RESET}"""
 
 BOSS_PORTRAITS = {
@@ -90,15 +92,6 @@ def slow_print(text, delay=0.01):
         time.sleep(delay)
     print()
 
-def animate_victory():
-    frames = ["  ( •_•)>⌐■-■  ", "  (⌐■_■)  ", "  ( •_•)>⌐■-■  ", "  (⌐■_■) VICTORY! "]
-    for _ in range(2):
-        for frame in frames:
-            sys.stdout.write("\r" + frame)
-            sys.stdout.flush()
-            time.sleep(0.3)
-    print()
-
 def get_vault_path():
     return os.path.join(os.getcwd(), VAULT_FILE)
 
@@ -112,7 +105,7 @@ def load_vault():
                 "level": 1, "xp": 0, "gold": 0, "sp": 0,
                 "class": "Novice", "inventory": [], "titles": ["The Unforged"],
                 "skills": {"efficiency": 0, "greed": 0, "luck": 0},
-                "buffs": {}, # {effect_name: missions_left}
+                "buffs": {},
                 "theme": "Cyberpunk"
             },
             "campaigns": {
@@ -120,6 +113,7 @@ def load_vault():
             },
             "active_campaign": "Default",
             "history": [],
+            "journal": [],
             "daily_quest": None,
             "shop": [
                 {"name": "Coffee of Focus", "price": 50, "effect": "XP_BOOST", "duration": 3, "desc": "+20% XP for 3 missions."},
@@ -133,15 +127,12 @@ def load_vault():
     try:
         with open(path, 'r') as f:
             v = json.load(f)
+            # Migration
+            if 'journal' not in v: v['journal'] = []
             p = v['player']
-            # Migration/Defaults for v4
-            if 'campaigns' not in v:
-                v['campaigns'] = {"Default": {"missions": v.get('missions', []), "bosses": v.get('bosses', [])}}
-                v['active_campaign'] = "Default"
-                if 'missions' in v: del v['missions']
-                if 'bosses' in v: del v['bosses']
             if 'buffs' not in p: p['buffs'] = {}
-            if 'theme' not in p: p['theme'] = "Cyberpunk"
+            if 'sp' not in p: p['sp'] = 0
+            if 'titles' not in p: p['titles'] = ["The Unforged"]
             return v
     except (json.JSONDecodeError, IOError):
         print(f"\033[31mError: Vault corrupted.\033[0m")
@@ -159,9 +150,7 @@ def get_xp_for_level(level):
 
 def add_xp(vault, amount):
     p = vault['player']
-    # Efficiency Skill: +5% XP per rank
     bonus = int(amount * (p['skills'].get('efficiency', 0) * 0.05))
-    # Buff: Coffee of Focus (+20% XP)
     if p['buffs'].get('XP_BOOST', 0) > 0:
         bonus += int(amount * 0.20)
 
@@ -174,7 +163,7 @@ def add_xp(vault, amount):
         p['level'] += 1
         p['sp'] += 1
         xp_needed = get_xp_for_level(p['level'])
-        slow_print(f"\n\033[33m\033[1m🌟 LEVEL UP! You are now Level {p['level']}!\033[0m", 0.03)
+        slow_print(f"\n\033[33m\033[1m🌟 CITADEL ADVANCEMENT! Reached Level {p['level']}!\033[0m", 0.03)
 
 def log_history(vault, message):
     vault['history'].append({
@@ -182,124 +171,167 @@ def log_history(vault, message):
         "event": message
     })
 
-# --- Features ---
+# --- Shared Command Logic ---
 
-def cmd_vault(vault):
+def cmd_status(vault):
     p = vault['player']
     t = THEMES.get(p['theme'], THEMES["Cyberpunk"])
-    prim = t["primary"]
-    sec = t["secondary"]
-    acc = t["accent"]
-
-    print(get_banner(p['theme']))
-    print(f"{C_BOLD}--- PLAYER PROFILE ---{C_RESET}")
-    print(f"{prim}Class:{C_RESET}  {p['class']}  {C_DIM}({p['titles'][-1]}){C_RESET}")
-    print(f"{prim}Level:{C_RESET}  {p['level']}  {sec}(SP: {p['sp']}){C_RESET}")
-    print(f"{prim}Theme:{C_RESET}  {p['theme']}")
+    prim, sec, acc = t["primary"], t["secondary"], t["accent"]
 
     xp_needed = get_xp_for_level(p['level'])
     percent = int((p['xp'] / xp_needed) * 20) if xp_needed > 0 else 0
-    bar = "█" * percent + "░" * (20 - percent)
-    print(f"{prim}XP:{C_RESET}     [{sec}{bar}{C_RESET}] {p['xp']}/{xp_needed}")
+    bar = f"{sec}" + "█" * percent + f"{C_RESET}{C_DIM}" + "░" * (20 - percent) + f"{C_RESET}"
 
-    print(f"{prim}Gold:{C_RESET}   {acc}⟁ {p['gold']}{C_RESET}")
+    campaign = vault['active_campaign']
+    missions = [m for m in vault['campaigns'][campaign]['missions'] if not m['completed']]
 
+    print(f"\n{C_BOLD}--- CITADEL DASHBOARD ---{C_RESET}")
+    print(f"{prim}LVL {p['level']}{C_RESET} | {bar} | {acc}⟁ {p['gold']}{C_RESET} | {prim}{p['class']}{C_RESET}")
+    print(f"{C_DIM}Campaign:{C_RESET} {acc}{campaign}{C_RESET} | {C_DIM}Missions:{C_RESET} {len(missions)} active")
     if p['buffs']:
-        buff_str = ", ".join([f"{b}({p['buffs'][b]})" for b in p['buffs'] if p['buffs'][b] > 0])
-        if buff_str: print(f"{prim}Buffs:{C_RESET}  {acc}{buff_str}{C_RESET}")
+        active = [f"{b}({v})" for b,v in p['buffs'].items() if v > 0]
+        if active: print(f"{sec}Buffs:{C_RESET} {', '.join(active)}")
+    if vault.get('daily_quest'):
+        print(f"{C_YELLOW}Daily Quest:{C_RESET} {vault['daily_quest']}")
 
-    if p.get('inventory'):
-        print(f"{prim}Items:{C_RESET}  {', '.join(p['inventory'])}")
-    print(f"{C_BOLD}----------------------{C_RESET}")
+def cmd_vault(vault):
+    p = vault['player']
+    print(f"\n{C_BOLD}--- VAULT PROFILE ---{C_RESET}")
+    print(f"Level: {p['level']} | XP: {p['xp']} | SP: {p['sp']} | Gold: {p['gold']}")
+    print(f"Class: {p['class']} | Titles: {', '.join(p['titles'])}")
+    if p['inventory']:
+        print(f"Inventory: {', '.join(p['inventory'])}")
 
-    print(f"{C_BOLD}CAMPAIGN:{C_RESET} {acc}{vault['active_campaign']}{C_RESET}")
-
-    # Activity Pulse (simplified heatmap)
-    print(f"{C_BOLD}PROJECT PULSE{C_RESET}")
-    now = datetime.now()
-    heatmap = ""
-    for i in range(29, -1, -1):
-        day = (now - timedelta(days=i)).date()
-        c = len([h for h in vault['history'] if datetime.fromisoformat(h['timestamp']).date() == day])
-        char = "░" if c == 0 else "▒" if c < 3 else "▓" if c < 6 else "█"
-        heatmap += char
-    print(f" {heatmap} {C_DIM}(30d Activity){C_RESET}")
-
-def cmd_theme(vault, theme_name=None):
-    if not theme_name:
-        print("Available Themes: " + ", ".join(THEMES.keys()))
-    elif theme_name in THEMES:
-        vault['player']['theme'] = theme_name
-        print(f"Theme set to {theme_name}!")
-        save_vault(vault)
-    else:
-        print("Invalid theme.")
-
-def cmd_campaign(vault, action=None, name=None):
+def cmd_journal(vault, action=None, entry=None):
     if not action or action == 'list':
-        print(f"\n{C_BOLD}--- CAMPAIGNS ---{C_RESET}")
-        for c in vault['campaigns']:
-            active = "*" if c == vault['active_campaign'] else " "
-            missions = len(vault['campaigns'][c]['missions'])
-            print(f"{active} {c:<15} ({missions} missions)")
-    elif action == 'create':
-        if name and name not in vault['campaigns']:
-            vault['campaigns'][name] = {"missions": [], "bosses": []}
-            print(f"Campaign '{name}' created.")
-            save_vault(vault)
-        else: print("Invalid name.")
-    elif action == 'switch':
-        if name in vault['campaigns']:
-            vault['active_campaign'] = name
-            print(f"Switched to Campaign: {name}")
-            save_vault(vault)
-        else: print("Campaign not found.")
+        print(f"\n{C_BOLD}--- DEV JOURNAL ---{C_RESET}")
+        for i, e in enumerate(vault['journal']):
+            print(f"{i}: {C_DIM}[{e['date']}]{C_RESET} {e['text']}")
+    elif action == 'add':
+        vault['journal'].append({
+            "date": datetime.now().strftime("%Y-%m-%d %H:%M"),
+            "text": entry
+        })
+        print("Log recorded.")
+        save_vault(vault)
+    elif action == 'clear':
+        vault['journal'] = []
+        print("Journal purged.")
+        save_vault(vault)
+
+def cmd_mission(vault, action='list', params=None):
+    params = params or []
+    p = vault['player']
+    c = vault['campaigns'][vault['active_campaign']]
+    if action == 'list':
+        print(f"\n{C_BOLD}--- MISSIONS ({vault['active_campaign']}) ---{C_RESET}")
+        for i, m in enumerate(c['missions']):
+            prio = m.get('priority', 'Med')
+            s = "✔" if m['completed'] else "✘"
+            print(f"{i}: {s} [{prio}] {m['title']} ({m['reward']} XP)")
+    elif action == 'add':
+        title = params[0] if len(params) > 0 else "Task"
+        reward = int(params[1]) if len(params) > 1 else 20
+        prio = params[2] if len(params) > 2 else "Med"
+        c['missions'].append({"title": title, "reward": reward, "completed": False, "priority": prio})
+        save_vault(vault)
+        print(f"Mission logged: {title}")
+    elif action == 'complete':
+        mid = int(params[0]) if len(params) > 0 else -1
+        if 0 <= mid < len(c['missions']):
+            m = c['missions'][mid]
+            if not m['completed']:
+                m['completed'] = True
+                xp = m['reward']
+                # Economy calc
+                gold_bonus = int((xp // 2) * (p['skills'].get('greed', 0) * 0.1))
+                gold = (xp // 2) + gold_bonus
+                if p['buffs'].get('GOLD_BOOST', 0) > 0: gold = int(gold * 1.5)
+
+                print(f"Mission Success! +{xp} XP, +{gold} Gold.")
+                p['gold'] += gold
+                add_xp(vault, xp)
+                log_history(vault, f"Mission: {m['title']}")
+
+                # Tick buffs
+                for b in list(p['buffs'].keys()):
+                    if p['buffs'][b] > 0:
+                        p['buffs'][b] -= 1
+                save_vault(vault)
+            else:
+                print("Mission already completed.")
+
+def cmd_boss(vault, action='list', params=None):
+    params = params or []
+    p = vault['player']
+    c = vault['campaigns'][vault['active_campaign']]
+    if action == 'list':
+        print(f"\n{C_BOLD}--- BOSSES ({vault['active_campaign']}) ---{C_RESET}")
+        for i, b in enumerate(c['bosses']):
+            s = "[DEAD]" if b['defeated'] else "[ALIVE]"
+            print(f"{i}: {s} {b['name']}")
+    elif action == 'spawn':
+        name = params[0] if len(params) > 0 else "Unnamed Terror"
+        c['bosses'].append({"name": name, "defeated": False, "reward": 200})
+        print(f"BOSS SPAWN: {name}")
+        if name in BOSS_PORTRAITS: print(BOSS_PORTRAITS[name])
+        save_vault(vault)
+    elif action == 'slay':
+        bid = int(params[0]) if len(params) > 0 else -1
+        if 0 <= bid < len(c['bosses']):
+            b = c['bosses'][bid]
+            if not b['defeated']:
+                b['defeated'] = True
+                p['gold'] += 100
+                add_xp(vault, b['reward'])
+                log_history(vault, f"Slew: {b['name']}")
+                print(f"VICTORY. {b['name']} defeated.")
+                save_vault(vault)
+
+def cmd_backup(vault):
+    if not os.path.exists(BACKUP_DIR):
+        os.makedirs(BACKUP_DIR)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    backup_path = os.path.join(BACKUP_DIR, f"vault_{timestamp}.json")
+    shutil.copy2(VAULT_FILE, backup_path)
+    print(f"Vault archived to {backup_path}")
 
 def cmd_roll(vault, bet):
     p = vault['player']
     if p['gold'] < bet:
-        print("Not enough Gold!")
+        print("Insufficient Gold.")
         return
     p['gold'] -= bet
-    print(f"Rolling the digital dice for {bet} Gold...")
-    time.sleep(1)
-    roll = random.randint(1, 6)
-    print(f"Outcome: {roll}")
-    if roll == 6:
-        win = bet * 5
+    print(f"Rolling the dice...")
+    time.sleep(0.5)
+    roll = random.randint(1, 10)
+    if roll == 10:
+        win = bet * 10
         p['gold'] += win
-        print(f"JACKPOT! Won {win} Gold!")
-    elif roll >= 4:
+        print(f"CRITICAL SUCCESS! +{win} Gold!")
+    elif roll > 5:
         win = bet * 2
         p['gold'] += win
-        print(f"Win! Gained {win} Gold.")
+        print(f"Success. +{win} Gold.")
     else:
-        print("Loss. Better luck next time.")
+        print("Failure.")
     save_vault(vault)
-
-def cmd_use(vault, item_name):
-    p = vault['player']
-    if item_name in p['inventory']:
-        item_data = next((i for i in vault['shop'] if i['name'] == item_name), None)
-        if item_data:
-            if item_data['effect'] == 'WISDOM':
-                add_xp(vault, 20)
-                p['inventory'].remove(item_name)
-                print(f"Used {item_name}. Gained 20 XP.")
-            elif 'duration' in item_data:
-                p['buffs'][item_data['effect']] = item_data['duration']
-                p['inventory'].remove(item_name)
-                print(f"Activated {item_name}! Buff applied for {item_data['duration']} missions.")
-            save_vault(vault)
-        else: print("No effect.")
-    else: print("Item not found.")
 
 # --- Interactive ---
 
 def interactive_mode(vault):
     print(get_banner(vault['player']['theme']))
-    if random.random() < 0.2:
-        slow_print(f"\033[35m\033[2m> Encounter: A glitch in the vault whispers your name...\033[0m", 0.03)
+    cmd_status(vault)
+
+    if readline:
+        commands = ['vault', 'status', 'mission list', 'mission add', 'mission complete',
+                    'boss list', 'boss spawn', 'boss slay', 'shop', 'journal', 'theme',
+                    'campaign', 'backup', 'roll', 'clear', 'exit']
+        def completer(text, state):
+            options = [i for i in commands if i.startswith(text)]
+            return options[state] if state < len(options) else None
+        readline.set_completer(completer)
+        readline.parse_and_bind("tab: complete")
 
     while True:
         try:
@@ -311,76 +343,29 @@ def interactive_mode(vault):
             cmd = parts[0].lower()
 
             if cmd in ['exit', 'quit']: break
+            elif cmd == 'help':
+                print("Commands: status, vault, journal [add|list], mission, boss, campaign, shop, theme, roll, backup, clear, exit")
+            elif cmd == 'status': cmd_status(vault)
             elif cmd == 'vault': cmd_vault(vault)
-            elif cmd == 'theme': cmd_theme(vault, parts[1] if len(parts) > 1 else None)
+            elif cmd == 'journal':
+                action = parts[1] if len(parts) > 1 else 'list'
+                entry = " ".join(parts[2:]) if len(parts) > 2 else None
+                cmd_journal(vault, action, entry)
+            elif cmd == 'mission':
+                cmd_mission(vault, parts[1] if len(parts) > 1 else 'list', parts[2:])
+            elif cmd == 'boss':
+                cmd_boss(vault, parts[1] if len(parts) > 1 else 'list', parts[2:])
             elif cmd == 'campaign':
                 action = parts[1] if len(parts) > 1 else 'list'
                 name = parts[2] if len(parts) > 2 else None
-                cmd_campaign(vault, action, name)
-            elif cmd == 'roll':
-                bet = int(parts[1]) if len(parts) > 1 else 10
-                cmd_roll(vault, bet)
-            elif cmd == 'mission':
-                sub = parts[1].lower() if len(parts) > 1 else 'list'
-                c = vault['campaigns'][vault['active_campaign']]
-                if sub == 'list':
-                    for i, m in enumerate(c['missions']):
-                        s = "✔" if m['completed'] else "✘"
-                        print(f"{i}: {s} {m['title']} ({m['reward']} XP)")
-                elif sub == 'add':
-                    title = parts[2] if len(parts) > 2 else "Unnamed"
-                    reward = int(parts[3]) if len(parts) > 3 else 20
-                    c['missions'].append({"title": title, "reward": reward, "completed": False})
+                if action == 'list':
+                    for c in vault['campaigns']: print(f"{'*' if c == vault['active_campaign'] else ' '} {c}")
+                elif action == 'create' and name:
+                    vault['campaigns'][name] = {"missions": [], "bosses": []}
                     save_vault(vault)
-                    print(f"Mission Forge: {title}")
-                elif sub == 'complete':
-                    mid = int(parts[2]) if len(parts) > 2 else -1
-                    if 0 <= mid < len(c['missions']):
-                        m = c['missions'][mid]
-                        if not m['completed']:
-                            m['completed'] = True
-                            xp = m['reward']
-                            # Greed/Buffs
-                            gold = (xp // 2) + int((xp // 2) * (p['skills']['greed'] * 0.1))
-                            if p['buffs'].get('GOLD_BOOST', 0) > 0: gold = int(gold * 1.5)
-
-                            print(f"Mission Clear! +{xp} XP, +{gold} Gold.")
-                            p['gold'] += gold
-                            add_xp(vault, xp)
-                            log_history(vault, f"Mission: {m['title']}")
-
-                            # Tick buffs
-                            for b in list(p['buffs'].keys()):
-                                if p['buffs'][b] > 0:
-                                    p['buffs'][b] -= 1
-                                    if p['buffs'][b] == 0: print(f"Buff expired: {b}")
-
-                            animate_victory()
-                            save_vault(vault)
-            elif cmd == 'boss':
-                sub = parts[1].lower() if len(parts) > 1 else 'list'
-                c = vault['campaigns'][vault['active_campaign']]
-                if sub == 'list':
-                    for i, b in enumerate(c['bosses']):
-                        s = "[DEAD]" if b['defeated'] else "[ALIVE]"
-                        print(f"{i}: {s} {b['name']}")
-                elif sub == 'spawn':
-                    name = parts[2] if len(parts) > 2 else "Unknown"
-                    c['bosses'].append({"name": name, "defeated": False, "reward": 200})
-                    print(f"BOSS SPAWN: {name}")
-                    if name in BOSS_PORTRAITS: print(BOSS_PORTRAITS[name])
+                elif action == 'switch' and name in vault['campaigns']:
+                    vault['active_campaign'] = name
                     save_vault(vault)
-                elif sub == 'slay':
-                    bid = int(parts[2]) if len(parts) > 2 else -1
-                    if 0 <= bid < len(c['bosses']):
-                        b = c['bosses'][bid]
-                        if not b['defeated']:
-                            b['defeated'] = True
-                            p['gold'] += 100
-                            add_xp(vault, b['reward'])
-                            log_history(vault, f"Slew: {b['name']}")
-                            print(f"VICTORY. {b['name']} defeated.")
-                            save_vault(vault)
             elif cmd == 'shop':
                 if len(parts) > 2 and parts[1] == 'buy':
                     idx = int(parts[2])
@@ -388,35 +373,54 @@ def interactive_mode(vault):
                     if p['gold'] >= item['price']:
                         p['gold'] -= item['price']
                         p['inventory'].append(item['name'])
-                        print(f"Bought {item['name']}!")
+                        print(f"Obtained {item['name']}.")
                         save_vault(vault)
-                    else: print("Gold needed.")
                 else:
                     for i, item in enumerate(vault['shop']):
                         print(f"{i}: {item['name']} ({item['price']} Gold) - {item['desc']}")
-            elif cmd == 'use':
-                if len(parts) > 1: cmd_use(vault, parts[1])
+            elif cmd == 'backup': cmd_backup(vault)
+            elif cmd == 'roll': cmd_roll(vault, int(parts[1]) if len(parts) > 1 else 10)
+            elif cmd == 'theme':
+                if len(parts) > 1:
+                    vault['player']['theme'] = parts[1]
+                    save_vault(vault)
             elif cmd == 'clear':
                 os.system('clear' if os.name == 'posix' else 'cls')
-            elif cmd == 'help':
-                print("Vault: vault | theme <name> | campaign <action> <name>")
-                print("Gameplay: mission <list|add|complete> | boss <list|spawn|slay> | use <item>")
-                print("Minigames: roll <bet>")
-                print("Economy: shop [buy <id>]")
-                print("System: clear | help | exit")
+            else:
+                print(f"Unknown command: {cmd}")
         except (EOFError, KeyboardInterrupt): break
         except Exception as e: print(f"Error: {e}")
 
 def main():
-    parser = argparse.ArgumentParser(description="GhostForge v4.0 - The Campaign Update")
+    parser = argparse.ArgumentParser(description="GhostForge v5.0 - The Citadel")
     parser.add_argument('command', nargs='?', default='forge')
-    parser.add_argument('subcommand', nargs='*', default=[])
+    parser.add_argument('params', nargs='*', default=[])
     args = parser.parse_args()
 
     vault = load_vault()
+    cmd = args.command.lower()
+    params = args.params
 
-    if args.command == 'vault': cmd_vault(vault)
-    else: interactive_mode(vault)
+    if cmd == 'forge':
+        interactive_mode(vault)
+    elif cmd == 'status':
+        cmd_status(vault)
+    elif cmd == 'backup':
+        cmd_backup(vault)
+    elif cmd == 'vault':
+        cmd_vault(vault)
+    elif cmd == 'journal':
+        action = params[0] if params else 'list'
+        entry = " ".join(params[1:]) if len(params) > 1 else None
+        cmd_journal(vault, action, entry)
+    elif cmd == 'mission':
+        cmd_mission(vault, params[0] if params else 'list', params[1:])
+    elif cmd == 'boss':
+        cmd_boss(vault, params[0] if params else 'list', params[1:])
+    elif cmd == 'help':
+        parser.print_help()
+    else:
+        interactive_mode(vault)
 
 if __name__ == "__main__":
     main()

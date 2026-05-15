@@ -1,13 +1,14 @@
-# GhostForge CLI v4.0: The Campaign Update ⚡🛡️
+# GhostForge CLI v5.0: The Citadel 🏰🌌
 
-GhostForge is the premiere offline terminal RPG for software engineers. Transform your engineering journey into an epic saga across multiple campaigns.
+GhostForge is the premiere offline terminal RPG for software engineers. Welcome to The Citadel—your high-security base of operations for legendary engineering.
 
-## ⚔️ New in v4.0: The Campaign Update
-- **Campaigns**: Organize your work into distinct Campaigns (e.g., 'Project X', 'Learning Rust'). Switch between them seamlessly.
-- **Theming Engine**: Personalize your forge with visual themes: `Cyberpunk`, `Frost`, and `Hellfire`.
-- **Active Buffs**: Items now grant tracked buffs. Consume a *Coffee of Focus* to gain an XP multiplier for your next 3 missions.
-- **Gambling (Dice Roll)**: Feeling lucky? Bet your Gold in a high-stakes digital dice game.
-- **Victory Animations**: Celebratory ASCII sequences for your hard-won mission completions.
+## ⚔️ New in v5.0: The Citadel Update
+- **Citadel Dashboard**: Run `status` for a high-density view of your Level, XP progress, Gold, and active missions.
+- **Dev Journal**: Record technical logs and architectural thoughts with the `journal` command.
+- **Mission Priority**: Tag missions with `Low`, `Med`, or `High` priority for better focus.
+- **Vault Archiving**: Protect your progress with `backup` to create timestamped snapshots of your `vault.json`.
+- **Advanced Autocomplete**: Smarter tab-completion in interactive mode for all core commands.
+- **Theming & Campaigns**: Full support for `Cyberpunk`, `Frost`, and `Hellfire` themes across multiple project campaigns.
 
 ## 🚀 Quick Start
 
@@ -21,26 +22,20 @@ GhostForge is the premiere offline terminal RPG for software engineers. Transfor
 python3 ghostforge.py
 ```
 
-### 3. Campaign Management
-- `campaign list`: See all your active campaigns.
-- `campaign create <name>`: Start a new saga.
-- `campaign switch <name>`: Pivot your focus to another project.
+### 3. Core Commands
+- `status`: The ultimate compact overview of your progress.
+- `journal add "Message"`: Record a note in your engineering log.
+- `mission add "Title" 50 High`: Add a high-priority mission with 50 XP reward.
+- `backup`: Archive your current vault data.
+- `roll <bet>`: Gamble gold for a chance at a critical windfall.
 
-### 4. Customization
-- `theme <name>`: Switch between `Cyberpunk`, `Frost`, and `Hellfire`.
+## 💎 The Citadel Lore
 
-### 5. Minigames
-- `roll <bet>`: Bet gold (1-6). 4/5 doubles your bet, 6 gives 5x!
+### 📖 The Journal
+The `journal` is your legacy. Use it to document your daily wins, bug-squashing strategies, or architectural epiphanies. It persists across all campaigns.
 
-## 💎 The Campaign Guide
-
-### 📂 Using Campaigns
-Campaigns isolate your missions and bosses. This is perfect for developers working on multiple projects simultaneously. Your Level, XP, and Gold are shared across all campaigns.
-
-### 🧪 Buffs & Potions
-Consumables from the `shop` now have durations.
-- **XP_BOOST**: Increases XP yield for the next N missions.
-- **GOLD_BOOST**: Increases Gold yield for the next N missions.
+### 🛡️ Vault Security
+Your `vault.json` is your most precious asset. Regular use of the `backup` command ensures that even a corrupted file won't stop your ascension. Backups are stored in the `.forge_backups` directory.
 
 ---
 **Strictly Offline. Zero Dependencies. Maximum Glory.**
