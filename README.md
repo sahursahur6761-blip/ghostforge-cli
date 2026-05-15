@@ -1,33 +1,45 @@
-# GhostForge v8.0: The Overseer 👁️⚔️
+# GhostForge CLI v9.0: The Nexus Bridge 🌌🛰️
 
-GhostForge Overseer is the next generation of terminal project management. With upgraded UI layouts, deep combat mechanics, and specialization paths, it turns your workflow into a professional-grade RPG.
+GhostForge is the ultimate offline terminal-based RPG project manager for software engineers. Forge your projects, automate your workflow, and conquer the codebase.
 
-## ⚔️ New in v8.0: The Overseer
-- **Energy System**: Missions and battles now consume/restore **Energy (ENG)**. Manage your stamina to perform special moves.
-- **Class Specializations**: Reach Level 10 to specialize as a **Netrunner** (+XP), **Enforcer** (+Combat), or **Architect** (+Gold).
-- **Hacking Minigame**: High-security missions now require a manual decryption bypass. Match the binary string to succeed.
-- **Box-Drawing UI**: Completely redesigned profiles and status headers using professional ASCII box-drawing characters.
-- **Auto-Archiving**: The Overseer automatically backs up your vault every 24 hours to ensure zero data loss.
-- **Command Aliases**: Move fast with shorthands: `s` (status), `m` (mission), `b` (boss).
+## ⚔️ New in v9.0: The Nexus
+- **Drone Companions**: Equippable drones like the *Viper* (+ATK) or *Mender* (+HP regen) provide powerful passive buffs.
+- **Manual Stat Allocation**: Use your **Skill Points (SP)** to manually increase ATK, DEF, and HACKING stats.
+- **Combat Hacking**: During boss fights, use the `Hack` command to deal high damage based on your Hacking stat.
+- **Improved HUD**: A high-density dashboard showing all core stats, active drones, and campaign progress.
 
-## 🚀 Global Installation
+## 🚀 How to Download & Install
+
+To install GhostForge globally on your system:
+
+1. **Download the source**:
+   Clone this repository or download `ghostforge.py` and `install.sh`.
+
+2. **Run the Installer**:
 ```bash
+chmod +x install.sh
 ./install.sh
 ```
 
-## 🕹️ Field Manual
+3. **Verify**:
+   Type `ghostforge s` from anywhere.
 
-### 1. Specializations (LVL 10+)
-- **Netrunner**: Gains a permanent 20% XP bonus for all tasks.
-- **Enforcer**: Unlocks heavy-hitting combat moves and higher base ATK.
-- **Architect**: Multiplies Gold bounty from all completed missions.
+## 🕹️ Nexus Field Manual
 
-### 2. Energy Mechanics
-- **Restore ENG**: Completing missions restores 10 Energy.
-- **Special Moves**: Use `Blast` during boss fights for double damage at the cost of 20 ENG.
+### 1. The Interactive Shell
+Simply run `ghostforge` to enter the **Nexus Bridge**.
 
-### 3. Decryption Minigame
-When completing a mission, you may be prompted to enter a binary sequence. Match it exactly within the time limit to claim your reward.
+- `status` (or `s`): View your core HUD.
+- `upgrade <stat>`: Spend 1 SP to increase `atk`, `def`, or `hack`.
+- `mission add "Task"`: Create a new project quest.
+- `mission complete <id>`: Finish a task and gain XP, Gold, and potential Drone repairs.
+- `boss fight <id>`: Enter the Nexus Arena. Use `Hack` for critical logic damage.
+- `shop buy <id>`: Purchase advanced weaponry or **Drones**.
+
+### 2. Drone Mechanics
+Drones are equippable companions that sit in your `DRONE` slot.
+- **Viper Drone**: Increases your base damage in all combat encounters.
+- **Mender Drone**: Repairs 5 HP automatically after every successful mission completion.
 
 ---
-**Zero Dependencies. Maximum Immersion. Stay Productive.**
+**Strictly Offline. Zero Dependencies. Legendary Productivity.**
