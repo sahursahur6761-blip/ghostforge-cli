@@ -1,17 +1,33 @@
 #!/bin/bash
 
-# GhostForge CLI Installer
-# Just makes it executable and checks for python
+# GhostForge CLI v7 Global Installer
+# Forges a link to the Galactic Forge in your PATH
 
-echo "Forging GhostForge..."
+echo "Forging GhostForge Global Link..."
 
+# Path setup
+TARGET_DIR="/usr/local/bin"
+SOURCE_FILE="$(pwd)/ghostforge.py"
+LINK_NAME="ghostforge"
+
+# Check for Python 3
 if ! command -v python3 &> /dev/null
 then
-    echo "Error: python3 could not be found. Please install Python 3."
+    echo "Error: Python 3 is required for the Galactic Forge."
     exit 1
 fi
 
-chmod +x ghostforge.py
+# Make executable
+chmod +x "$SOURCE_FILE"
 
-echo "Done! You can now run GhostForge using './ghostforge.py' or 'python3 ghostforge.py'"
-./ghostforge.py vault
+# Create symlink (may require sudo)
+if [ -w "$TARGET_DIR" ]; then
+    ln -sf "$SOURCE_FILE" "$TARGET_DIR/$LINK_NAME"
+    echo "Galactic Link established at $TARGET_DIR/$LINK_NAME"
+else
+    echo "Requesting sudo to establish Galactic Link at $TARGET_DIR/$LINK_NAME..."
+    sudo ln -sf "$SOURCE_FILE" "$TARGET_DIR/$LINK_NAME"
+fi
+
+echo "Done! You can now run GhostForge from anywhere by typing 'ghostforge'"
+ghostforge status
